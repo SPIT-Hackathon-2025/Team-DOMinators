@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { auth } from '../components/firebase';
 import { signOut } from 'firebase/auth';
@@ -6,8 +6,16 @@ import { toast } from 'react-toastify';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
-  const user = auth.currentUser;
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -30,44 +38,35 @@ const Navbar = () => {
           </div>
           
           <div className="hidden md:flex items-center space-x-8">
-            {/* Show these links only when user is authenticated */}
             {user && (
               <React.Fragment>
-                {user && user.type === 'player' && (
-              <>
-                <Link to="/player/home" className="text-gray-300 hover:text-purple-500">Home</Link>
-                <Link to="/market" className="text-gray-300 hover:text-purple-500">Marketplace</Link>
-                <Link to="/Pgame" className="text-gray-300 hover:text-purple-500">Games</Link>
-                <Link to="/tournaments" className="text-gray-300 hover:text-purple-500">Tournaments</Link>
-                <Link to="/community" className="text-gray-300 hover:text-purple-500">Community</Link>
-              </>
-            )}
+                {user.type === 'player' && (
+                  <>
+                    <Link to="/player/home" className="text-gray-300 hover:text-purple-500">Home</Link>
+                    <Link to="/market" className="text-gray-300 hover:text-purple-500">Marketplace</Link>
+                    <Link to="/Pgame" className="text-gray-300 hover:text-purple-500">Games</Link>
+                    <Link to="/tournaments" className="text-gray-300 hover:text-purple-500">Tournaments</Link>
+                    <Link to="/community" className="text-gray-300 hover:text-purple-500">Community</Link>
+                  </>
+                )}
 
-            {user && user.type === 'developer' && (
-              <>
-                <Link to="/developer/home" className="text-gray-300 hover:text-purple-500">Home</Link>
-                <Link to="/Dgame" className="text-gray-300 hover:text-purple-500">Games</Link>
-                <Link to="/tournaments" className="text-gray-300 hover:text-purple-500">Tournaments</Link>
-                <Link to="/crowdfunding" className="text-gray-300 hover:text-purple-500">Crowdfunding</Link>
-              </>
-            )}
-                
+                {user.type === 'developer' && (
+                  <>
+                    <Link to="/developer/home" className="text-gray-300 hover:text-purple-500">Home</Link>
+                    <Link to="/Dgames" className="text-gray-300 hover:text-purple-500">Games</Link>
+                    <Link to="/tournaments" className="text-gray-300 hover:text-purple-500">Tournaments</Link>
+                    <Link to="/crowdfunding" className="text-gray-300 hover:text-purple-500">Crowdfunding</Link>
+                  </>
+                )}
               </React.Fragment>
             )}
             
-            {/* Show login/register when not authenticated, logout when authenticated */}
             {!user ? (
               <div className="flex items-center space-x-4">
-                <Link 
-                  to="/login" 
-                  className="text-gray-300 hover:text-purple-500 transition-colors"
-                >
+                <Link to="/login" className="text-gray-300 hover:text-purple-500 transition-colors">
                   Login
                 </Link>
-                <Link 
-                  to="/register" 
-                  className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors"
-                >
+                <Link to="/register" className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors">
                   Register
                 </Link>
               </div>
@@ -81,6 +80,7 @@ const Navbar = () => {
             )}
           </div>
 
+          {/* Mobile menu button remains the same */}
           <div className="md:hidden flex items-center">
             <button onClick={() => setIsOpen(!isOpen)} className="text-gray-300">
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -95,59 +95,45 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu content - update similarly to desktop menu */}
       {isOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {/* Show these links only when user is authenticated */}
-            {user && (
-              <React.Fragment>
-                <Link to="/" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">
-                  Home
-                </Link>
-                <Link to="/marketplace" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">
-                  Marketplace
-                </Link>
-                <Link to="/tournaments" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">
-                  Tournaments
-                </Link>
-                {/* Add Crowdfunding link if user is a developer */}
-                {user.type === 'developer' && (
-                  <Link to="/crowdfunding" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">
-                    Crowdfunding
-                  </Link>
-                )}
+            {user ? (
+              <>
                 {user.type === 'player' && (
-                  <Link to="/community" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">
-                    Community
-                  </Link>
+                  <>
+                    <Link to="/player/home" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">Home</Link>
+                    <Link to="/market" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">Marketplace</Link>
+                    <Link to="/Pgame" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">Games</Link>
+                    <Link to="/tournaments" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">Tournaments</Link>
+                    <Link to="/community" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">Community</Link>
+                  </>
                 )}
-              </React.Fragment>
-            )}
-            
-            {/* Show login/register when not authenticated, logout when authenticated */}
-            {!user ? (
-              <React.Fragment>
-                <Link 
-                  to="/login" 
-                  className="block text-gray-300 hover:text-purple-500 transition-colors py-2"
+                {user.type === 'developer' && (
+                  <>
+                    <Link to="/developer/home" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">Home</Link>
+                    <Link to="/Dgames" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">Games</Link>
+                    <Link to="/tournaments" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">Tournaments</Link>
+                    <Link to="/crowdfunding" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">Crowdfunding</Link>
+                  </>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="w-full bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors mt-4"
                 >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">
                   Login
                 </Link>
-                <Link 
-                  to="/register" 
-                  className="block bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors mt-4"
-                >
+                <Link to="/register" className="block bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors mt-4">
                   Register
                 </Link>
-              </React.Fragment>
-            ) : (
-              <button
-                onClick={handleLogout}
-                className="w-full bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors mt-4"
-              >
-                Logout
-              </button>
+              </>
             )}
           </div>
         </div>

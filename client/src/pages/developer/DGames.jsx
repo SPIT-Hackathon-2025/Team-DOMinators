@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import abi from '../../../abi.json';
+import details from '../../assets/details.jpg';
+import upload from '../../assets/upload.png';
 import { motion } from 'framer-motion';
 
 const CONTRACT_ADDRESS = "0x1aEC03d66c2Caee890AdAE3aF87E397e26F5456b";
@@ -218,7 +220,7 @@ const DGames = () => {
             whileTap={{ scale: 0.98 }}
             className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
               activeTab === 'games' 
-                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md' 
+                ? 'bg-purple-600 from-purple-600 to-pink-600 text-white shadow-md' 
                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
             }`}
             onClick={() => setActiveTab('games')}
@@ -230,66 +232,92 @@ const DGames = () => {
             whileTap={{ scale: 0.98 }}
             className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
               activeTab === 'nfts' 
-                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md' 
+                ? 'bg-purple-600 from-purple-600 to-pink-600 text-white shadow-md' 
                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
             }`}
             onClick={() => setActiveTab('nfts')}
           >
-            NFTs
+            Assets
           </motion.button>
         </div>
 
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-lg p-6">
+        <div className=" rounded-xl shadow-lg p-6">
           {activeTab === 'games' ? (
-            <div className="space-y-8">
-              <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg p-6">
-                <h3 className="text-xl font-semibold mb-6 text-white">Upload Game</h3>
-                <form onSubmit={uploadGame} className="space-y-4">
-                  <input
-                    type="text"
-                    placeholder="Game Type"
-                    value={gameType}
-                    onChange={(e) => setGameType(e.target.value)}
-                    className="w-full bg-gray-600/50 rounded-lg px-4 py-3 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  />
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-md hover:shadow-lg font-medium"
-                  >
-                    Upload Game
-                  </motion.button>
-                </form>
-              </div>
-
-              <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg p-6">
-                <h3 className="text-xl font-semibold mb-6 text-white">Get Game Details</h3>
-                <form onSubmit={getGameDetails} className="space-y-4">
-                  <input
-                    type="number"
-                    placeholder="Game ID"
-                    value={gameId}
-                    onChange={(e) => setGameId(e.target.value)}
-                    className="w-full bg-gray-600/50 rounded-lg px-4 py-3 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  />
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white px-4 py-3 rounded-lg hover:from-green-700 hover:to-teal-700 transition-all duration-300 shadow-md hover:shadow-lg font-medium"
-                  >
-                    Get Details
-                  </motion.button>
-                </form>
-                {gameDetails && (
-                  <div className="mt-6 p-4 bg-gray-600/50 rounded-lg shadow-sm">
-                    <p className="mb-2 text-gray-300"><span className="font-medium">Game Type:</span> {gameDetails.gameType}</p>
-                    <p className="text-gray-300"><span className="font-medium">Developer:</span> {gameDetails.developer}</p>
-                  </div>
-                )}
-              </div>
-            </div>
+             <div className="space-y-1 max-w-6xl mx-auto px-4">
+             {/* Top Section */}
+             <div className="flex gap-8 items-start">
+               {/* Left Image */}
+               <div className="w-1/3">
+                 <div className="aspect-square  rounded-lg flex items-center justify-center">
+                   <img 
+                     src={upload}
+                     alt="Game Preview" 
+                     className="rounded-lg object-cover"
+                   />
+                 </div>
+               </div>
+       
+               {/* Upload Game Form */}
+               <div className="flex-1 mt-28">
+                 <h3 className="text-lg font-semibold mb-4">Upload Game</h3>
+                 <form onSubmit={uploadGame} className="space-y-4">
+                   <input
+                     type="text"
+                     placeholder="Game Type"
+                     value={gameType}
+                     onChange={(e) => setGameType(e.target.value)}
+                     className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                   />
+                   <button
+                     type="submit"
+                     className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                   >
+                     Upload Game
+                   </button>
+                 </form>
+               </div>
+             </div>
+       
+             {/* Bottom Section */}
+             <div className="flex gap-8 items-start">
+               {/* Get Game Details Form */}
+               <div className="flex-1 mt-18">
+                 <h3 className="text-lg font-semibold mb-4">Get Game Details</h3>
+                 <form onSubmit={getGameDetails} className="space-y-4">
+                   <input
+                     type="number"
+                     placeholder="Game ID"
+                     value={gameId}
+                     onChange={(e) => setGameId(e.target.value)}
+                     className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                   />
+                   <button
+                     type="submit"
+                     className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
+                   >
+                     Get Details
+                   </button>
+                 </form>
+                 {gameDetails && (
+                   <div className="mt-4 p-4 bg-gray-50 rounded-md text-gray-700">
+                     <p>Game Type: {gameDetails.gameType}</p>
+                     <p>Developer: {gameDetails.developer}</p>
+                   </div>
+                 )}
+               </div>
+       
+               {/* Right Image */}
+               <div className="w-1/3">
+                 <div className="aspect-square bg-gray-200 rounded-lg flex items-center justify-center text-gray-700">
+                   <img 
+                     src={details}
+                     alt="Game Details Preview" 
+                     className="rounded-lg object-cover"
+                   />
+                 </div>
+               </div>
+             </div>
+           </div>
           ) : (
             <div className="space-y-8">
               <div className="flex flex-wrap gap-2 mb-6">
@@ -361,7 +389,7 @@ const DGames = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="submit"
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-md hover:shadow-lg font-medium"
+                    className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-md hover:shadow-lg font-medium"
                   >
                     Mint NFT
                   </motion.button>
@@ -382,13 +410,13 @@ const DGames = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="submit"
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-md hover:shadow-lg font-medium"
+                    className="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-md hover:shadow-lg font-medium"
                   >
                     Get Details
                   </motion.button>
                 </form>
                 {nftDetails && (
-                  <div className="mt-6 p-4 bg-gray-600/50 rounded-lg shadow-sm">
+                  <div className="mt-6 p-4 bg-gray-600/50 rounded-lg shadow-sm text-gray-700">
                     <p className="mb-2 text-gray-300"><span className="font-medium">Owner:</span> {nftDetails.owner}</p>
                     <p className="mb-2 text-gray-300"><span className="font-medium">Price:</span> {ethers.utils.formatEther(nftDetails.price)} ESPX</p>
                     <p className="mb-2 text-gray-300"><span className="font-medium">For Sale:</span> {nftDetails.forSale ? 'Yes' : 'No'}</p>
