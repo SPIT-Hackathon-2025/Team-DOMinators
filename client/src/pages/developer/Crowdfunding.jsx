@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DollarSign, Image, Clock, Plus, X, Calendar, LayoutGrid } from 'lucide-react';
 import axios from 'axios';
+import { db } from '../../components/firebase'; // Import Firestore
+import { collection, addDoc, getDocs } from "firebase/firestore";
 
 // =========== CreateProjectModal Component ===========
 const CreateProjectModal = ({ isOpen, onClose, onSubmit }) => {
@@ -234,7 +236,7 @@ const ProjectCard = ({ project, onBackProject }) => {
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all min-h-screen"
+      className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all"
     >
       {imageUrls && imageUrls.length > 0 && (
         <div className="relative w-full h-48 mb-4 rounded-lg overflow-hidden">
@@ -287,28 +289,29 @@ const Crowdfunding = () => {
   const [selectedTab, setSelectedTab] = useState('active');
   const [projects, setProjects] = useState([]);
 
+  // Fetch projects from Firestore on component mount
   useEffect(() => {
-    // Load projects from localStorage on component mount
-    const savedProjects = localStorage.getItem('crowdfundingProjects');
-    if (savedProjects) {
-      setProjects(JSON.parse(savedProjects));
-    }
+    const fetchProjects = async () => {
+      const querySnapshot = await getDocs(collection(db, "Projects"));
+      const projectsArray = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setProjects(projectsArray);
+    };
+
+    fetchProjects();
   }, []);
 
-  useEffect(() => {
-    // Save projects to localStorage whenever they change
-    localStorage.setItem('crowdfundingProjects', JSON.stringify(projects));
-  }, [projects]);
-
-  const handleCreateProject = (newProject) => {
-    setProjects(prevProjects => [...prevProjects, newProject]);
+  // Handle project creation
+  const handleCreateProject = async (newProject) => {
+    const docRef = await addDoc(collection(db, "Projects"), newProject);
+    setProjects(prevProjects => [...prevProjects, { id: docRef.id, ...newProject }]);
   };
 
+  // Handle backing a project
   const handleBackProject = (project) => {
-    // Add your backing logic here
     console.log('Backing project:', project);
   };
 
+  // Filter projects based on selected tab
   const filteredProjects = projects.filter(project => {
     if (selectedTab === 'active') {
       return project.status === 'active';
@@ -320,7 +323,7 @@ const Crowdfunding = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto mt-16">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
             Game Crowdfunding

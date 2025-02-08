@@ -1,13 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, DollarSign, Users, AlertCircle, Plus, Award, Check, X } from 'lucide-react';
+import { db, auth } from '../../components/firebase';
+import { collection, addDoc, query, where, onSnapshot } from 'firebase/firestore';
 
 const CreateTournamentModal = ({ isOpen, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
     name: '',
+    description: '',
     prizePool: '',
-    numberOfUsers: 3, // Default number of users
-    splitRatios: Array(3).fill('') // Default split ratios for 3 users
+    startDate: '',
+    endDate: '',
+    startTime: '',
+    endTime: '',
+    numberOfUsers: 3,
+    splitRatios: Array(3).fill('')
   });
 
   const handleSubmit = (e) => {
@@ -17,7 +24,17 @@ const CreateTournamentModal = ({ isOpen, onClose, onSubmit }) => {
       splitRatios: formData.splitRatios.map(ratio => parseInt(ratio))
     });
     onClose();
-    setFormData({ name: '', prizePool: '', numberOfUsers: 3, splitRatios: Array(3).fill('') });
+    setFormData({ 
+      name: '', 
+      description: '', 
+      prizePool: '', 
+      startDate: '', 
+      endDate: '', 
+      startTime: '', 
+      endTime: '', 
+      numberOfUsers: 3, 
+      splitRatios: Array(3).fill('') 
+    });
   };
 
   const handleSplitChange = (index, value) => {
@@ -56,7 +73,7 @@ const CreateTournamentModal = ({ isOpen, onClose, onSubmit }) => {
               Create Tournament
             </h2>
             
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6 max-h-[80vh] overflow-y-auto">
               <div>
                 <label className="block text-sm font-medium mb-2 text-gray-300">Tournament Name</label>
                 <input
@@ -66,6 +83,16 @@ const CreateTournamentModal = ({ isOpen, onClose, onSubmit }) => {
                   className="w-full bg-gray-700/50 rounded-lg px-4 py-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                   required
                   placeholder="Enter tournament name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">Tournament Description</label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full bg-gray-700/50 rounded-lg px-4 py-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  required
+                  placeholder="Enter tournament description"
                 />
               </div>
               <div>
@@ -82,6 +109,46 @@ const CreateTournamentModal = ({ isOpen, onClose, onSubmit }) => {
                   />
                   <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">ETH</span>
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">Start Date</label>
+                <input
+                  type="date"
+                  value={formData.startDate}
+                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  className="w-full bg-gray-700/50 rounded-lg px-4 py-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">End Date</label>
+                <input
+                  type="date"
+                  value={formData.endDate}
+                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  className="w-full bg-gray-700/50 rounded-lg px-4 py-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">Start Time</label>
+                <input
+                  type="time"
+                  value={formData.startTime}
+                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                  className="w-full bg-gray-700/50 rounded-lg px-4 py-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">End Time</label>
+                <input
+                  type="time"
+                  value={formData.endTime}
+                  onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                  className="w-full bg-gray-700/50 rounded-lg px-4 py-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  required
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2 text-gray-300">Number of Users to Split Prize</label>
@@ -196,38 +263,33 @@ const TournamentCard = ({ tournament, onDistributePrizes }) => {
 const DeveloperTournament = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState('active');
-  const [tournaments, setTournaments] = useState([
-    {
-      id: 1,
-      name: "EspeonX Masters",
-      prizePool: "100",
-      splitRatios: [60, 30, 10],
-      status: "active"
-    },
-    {
-      id: 2,
-      name: "Crypto Cup 2024",
-      prizePool: "50",
-      splitRatios: [70, 20, 10],
-      status: "closed",
-      winners: ["0x1234...5678", "0x5678...9012", "0x9012...3456"]
-    },
-    {
-      id: 3,
-      name: "Future Stars 2025",
-      prizePool: "75",
-      splitRatios: [50, 30, 20],
-      status: "upcoming"
-    }
-  ]);
+  const [tournaments, setTournaments] = useState([]);
 
-  const handleCreateTournament = (tournamentData) => {
-    const newTournament = {
-      id: tournaments.length + 1,
-      ...tournamentData,
-      status: "active"
-    };
-    setTournaments([...tournaments, newTournament]);
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (user) {
+      const q = query(collection(db, 'Tournaments'), where('developerId', '==', user.uid));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const tournamentsData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setTournaments(tournamentsData);
+      });
+      return () => unsubscribe();
+    }
+  }, []);
+
+  const handleCreateTournament = async (tournamentData) => {
+    const user = auth.currentUser;
+    if (user) {
+      const tournamentWithDeveloper = {
+        ...tournamentData,
+        developerId: user.uid,
+        status: "active"
+      };
+      await addDoc(collection(db, 'Tournaments'), tournamentWithDeveloper);
+    }
   };
 
   const handleDistributePrizes = (tournamentId, winners) => {
@@ -239,9 +301,13 @@ const DeveloperTournament = () => {
   };
 
   const filteredTournaments = tournaments.filter(tournament => {
-    if (selectedTab === 'active') return tournament.status === 'active';
-    if (selectedTab === 'upcoming') return tournament.status === 'upcoming';
-    if (selectedTab === 'closed') return tournament.status === 'closed';
+    const now = new Date();
+    const startDate = new Date(`${tournament.startDate}T${tournament.startTime}`);
+    const endDate = new Date(`${tournament.endDate}T${tournament.endTime}`);
+
+    if (selectedTab === 'active') return now >= startDate && now <= endDate;
+    if (selectedTab === 'upcoming') return now < startDate;
+    if (selectedTab === 'closed') return now > endDate;
     return true;
   });
 
