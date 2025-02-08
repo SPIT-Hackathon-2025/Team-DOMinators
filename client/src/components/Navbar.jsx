@@ -33,9 +33,17 @@ const Navbar = () => {
             {/* Show these links only when user is authenticated */}
             {user && (
               <React.Fragment>
-                <Link to="/" className="text-gray-300 hover:text-purple-500 transition-colors">
-                  Home
-                </Link>
+                
+                {user.type === 'player' && (
+                  <Link to="/player/home" className="text-gray-300 hover:text-purple-500 transition-colors">
+                    Home
+                  </Link>
+                )}
+                  {user.type === 'developer' && (
+                  <Link to="/developer/home" className="text-gray-300 hover:text-purple-500 transition-colors">
+                    Home
+                  </Link>
+                )}
                 <Link to="/marketplace" className="text-gray-300 hover:text-purple-500 transition-colors">
                   Marketplace
                 </Link>
