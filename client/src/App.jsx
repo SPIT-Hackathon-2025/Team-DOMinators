@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import { getDoc, doc } from "firebase/firestore";
+import { onAuthStateChanged } from 'firebase/auth';
 import 'react-toastify/dist/ReactToastify.css';
 
 import Navbar from './components/Navbar';
@@ -20,7 +21,17 @@ import { auth, db } from './components/firebase';
 function PrivateRoute({ children, allowedUserType }) {
   const [userType, setUserType] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
-  const user = auth.currentUser;
+  const [authChecked, setAuthChecked] = React.useState(false);
+  const [user, setUser] = React.useState(null);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setAuthChecked(true);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   React.useEffect(() => {
     const checkUserType = async () => {
@@ -37,19 +48,21 @@ function PrivateRoute({ children, allowedUserType }) {
       setLoading(false);
     };
 
-    checkUserType();
-  }, [user]);
+    if (authChecked) {
+      checkUserType();
+    }
+  }, [user, authChecked]);
 
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
-
-  if (loading) {
+  if (!authChecked || loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
       </div>
     );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" />;
   }
 
   if (allowedUserType && userType !== allowedUserType) {
@@ -61,20 +74,44 @@ function PrivateRoute({ children, allowedUserType }) {
 
 function TournamentRouter() {
   const [userType, setUserType] = React.useState(null);
-  const user = auth.currentUser;
+  const [loading, setLoading] = React.useState(true);
+  const [user, setUser] = React.useState(null);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   React.useEffect(() => {
     const checkUserType = async () => {
       if (user) {
-        const userTypeDoc = await getDoc(doc(db, "UserTypes", user.uid));
-        if (userTypeDoc.exists()) {
-          setUserType(userTypeDoc.data().type);
+        try {
+          const userTypeDoc = await getDoc(doc(db, "UserTypes", user.uid));
+          if (userTypeDoc.exists()) {
+            setUserType(userTypeDoc.data().type);
+          }
+        } catch (error) {
+          console.error("Error fetching user type:", error);
         }
+        setLoading(false);
       }
     };
 
-    checkUserType();
+    if (user) {
+      checkUserType();
+    }
   }, [user]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+      </div>
+    );
+  }
 
   if (!user) {
     return <Navigate to="/login" />;
@@ -82,12 +119,32 @@ function TournamentRouter() {
 
   if (userType === "developer") {
     return <DeveloperTournament />;
+  } else if (userType === "player") {
+    return <Tournament />;
   }
 
-  return <Tournament />;
+  return <Navigate to={`/${userType}/home`} />;
 }
 
 function App() {
+  const [authInitialized, setAuthInitialized] = React.useState(false);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, () => {
+      setAuthInitialized(true);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  if (!authInitialized) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+      </div>
+    );
+  }
+
   return (
     <Router>
       <div className="min-h-screen bg-gray-900 text-white">
@@ -117,14 +174,10 @@ function App() {
             }
           />
           
-          {/* Tournament route with dynamic rendering */}
+          {/* Tournament route */}
           <Route
             path="/tournaments"
-            element={
-              <PrivateRoute>
-                <TournamentRouter />
-              </PrivateRoute>
-            }
+            element={<TournamentRouter />}
           />
           
           {/* Developer routes */}
