@@ -36,7 +36,8 @@ const Navbar = () => {
                 {user && user.type === 'player' && (
               <>
                 <Link to="/player/home" className="text-gray-300 hover:text-purple-500">Home</Link>
-                <Link to="/marketplace" className="text-gray-300 hover:text-purple-500">Marketplace</Link>
+                <Link to="/market" className="text-gray-300 hover:text-purple-500">Marketplace</Link>
+                <Link to="/Pgame" className="text-gray-300 hover:text-purple-500">Games</Link>
                 <Link to="/tournaments" className="text-gray-300 hover:text-purple-500">Tournaments</Link>
                 <Link to="/community" className="text-gray-300 hover:text-purple-500">Community</Link>
               </>
@@ -45,6 +46,7 @@ const Navbar = () => {
             {user && user.type === 'developer' && (
               <>
                 <Link to="/developer/home" className="text-gray-300 hover:text-purple-500">Home</Link>
+                <Link to="/Dgame" className="text-gray-300 hover:text-purple-500">Games</Link>
                 <Link to="/tournaments" className="text-gray-300 hover:text-purple-500">Tournaments</Link>
                 <Link to="/crowdfunding" className="text-gray-300 hover:text-purple-500">Crowdfunding</Link>
               </>

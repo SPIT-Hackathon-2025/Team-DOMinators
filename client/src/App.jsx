@@ -7,7 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import Market from './pages/players/Market';
+import PGames from './pages/players/PGames';
 import Tournament from './pages/players/Tournament';
 import DeveloperTournament from './pages/developer/DeveloperTournament';
 import LandingPage from './pages/LandingPage';
@@ -19,6 +19,8 @@ import Crowdfunding from './pages/developer/Crowdfunding'; // Import Crowdfundin
 
 import { auth, db } from './components/firebase';
 import CommunityPage from './pages/players/CommunityPage';
+import DGames from './pages/developer/DGames';
+import Market from './pages/players/Market';
 
 function PrivateRoute({ children, allowedUserType }) {
   const [userType, setUserType] = React.useState(null);
@@ -168,10 +170,18 @@ function App() {
             }
           />
           <Route
-            path="/marketplace"
+            path="/Pgames"
             element={
               <PrivateRoute allowedUserType="player">
-                <Market />
+                <PGames/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/market"
+            element={
+              <PrivateRoute allowedUserType="player">
+                <Market/>
               </PrivateRoute>
             }
           />
@@ -207,6 +217,15 @@ function App() {
               </PrivateRoute>
             }
           />
+          <Route
+            path="/Dgames"
+            element={
+              <PrivateRoute allowedUserType="developer">
+                <DGames/>
+              </PrivateRoute>
+            }
+          />
+
         </Routes>
         <Footer />
       </div>
