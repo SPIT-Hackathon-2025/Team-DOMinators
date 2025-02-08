@@ -1,11 +1,48 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Gamepad2, Rocket, ChevronDown } from 'lucide-react';
 
 const Hero = () => {
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.setAttribute("data-who", "💎 Made with naker.io 💎");
+    script.src = "https://d23jutsnau9x47.cloudfront.net/back/v1.0.9/viewer.js";
+    script.setAttribute("data-option", JSON.stringify({
+      environment: {
+        gradient: "horizontal",
+        sensitivity: 0.8,
+        colorStart: [23, 25, 46, 0],
+          colorEnd: [41, 27, 73, 0],
+      },
+      particle: {
+        life: 5,
+        power: 0.040,
+        texture: "https://res.cloudinary.com/naker-io/image/upload/v1739033538/thfif3azl4c8vc3kiyov.png",
+        number: 65,
+        colorStart: [53, 34, 197, 0.13],
+        colorEnd: [86, 93, 184, 0.45],
+        sizeStart: 1.57,
+        sizeEnd: 2.9,
+        direction1: { x: 100, y: 100, z: 100 },
+        direction2: { x: -100, y: -100, z: -100 },
+      }
+    }));
+    const heroContainer = document.querySelector("#hero-section");
+    if (heroContainer) {
+      heroContainer.appendChild(script);
+    }
+    return () => {
+      // Cleanup script on component unmount
+      if (heroContainer) {
+        heroContainer.removeChild(script);
+      }
+    };
+  }, []);
+
+  
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-900 to-gray-900 opacity-50"></div>
+      <div id="hero-section" className=" absolute inset-0 bg-gradient-to-br from-purple-900 to-gray-900 opacity-50"></div>
       <div className="absolute inset-0 bg-[url('/gaming-bg.jpg')] bg-cover bg-center mix-blend-overlay"></div>
       
       <motion.div 
@@ -29,7 +66,21 @@ const Hero = () => {
           transition={{ delay: 0.3 }}
           className="text-5xl md:text-7xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600"
         >
-          EspeonX
+          <span>Espeon</span>
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.2, 1],
+              rotate: [0, 360, 0]
+            }}
+            transition={{ 
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600"
+          >
+            X
+          </motion.div>
         </motion.h1>
 
         <motion.p 
