@@ -1,8 +1,23 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { auth } from '../components/firebase';
+import { signOut } from 'firebase/auth';
+import { toast } from 'react-toastify';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const user = auth.currentUser;
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast.success('Logged out successfully');
+      navigate('/');
+    } catch (error) {
+      toast.error('Error logging out');
+    }
+  };
 
   return (
     <nav className="fixed w-full bg-gray-900 bg-opacity-90 backdrop-blur-sm z-50">
@@ -15,18 +30,45 @@ const Navbar = () => {
           </div>
           
           <div className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="text-gray-300 hover:text-purple-500 transition-colors">
-              Home
-            </Link>
-            <Link to="/marketplace" className="text-gray-300 hover:text-purple-500 transition-colors">
-              Marketplace
-            </Link>
-            <Link to="/tournaments" className="text-gray-300 hover:text-purple-500 transition-colors">
-              Tournaments
-            </Link>
-            <button className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors">
-              Connect Wallet
-            </button>
+            {/* Show these links only when user is authenticated */}
+            {user && (
+              <>
+                <Link to="/" className="text-gray-300 hover:text-purple-500 transition-colors">
+                  Home
+                </Link>
+                <Link to="/marketplace" className="text-gray-300 hover:text-purple-500 transition-colors">
+                  Marketplace
+                </Link>
+                <Link to="/tournaments" className="text-gray-300 hover:text-purple-500 transition-colors">
+                  Tournaments
+                </Link>
+              </>
+            )}
+            
+            {/* Show login/register when not authenticated, logout when authenticated */}
+            {!user ? (
+              <div className="flex items-center space-x-4">
+                <Link 
+                  to="/login" 
+                  className="text-gray-300 hover:text-purple-500 transition-colors"
+                >
+                  Login
+                </Link>
+                <Link 
+                  to="/register" 
+                  className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors"
+                >
+                  Register
+                </Link>
+              </div>
+            ) : (
+              <button
+                onClick={handleLogout}
+                className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors"
+              >
+                Logout
+              </button>
+            )}
           </div>
 
           <div className="md:hidden flex items-center">
@@ -43,21 +85,49 @@ const Navbar = () => {
         </div>
       </div>
 
+      {/* Mobile menu */}
       {isOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <Link to="/" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">
-              Home
-            </Link>
-            <Link to="/marketplace" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">
-              Marketplace
-            </Link>
-            <Link to="/tournaments" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">
-              Tournaments
-            </Link>
-            <button className="w-full bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors mt-4">
-              Connect Wallet
-            </button>
+            {/* Show these links only when user is authenticated */}
+            {user && (
+              <>
+                <Link to="/" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">
+                  Home
+                </Link>
+                <Link to="/marketplace" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">
+                  Marketplace
+                </Link>
+                <Link to="/tournaments" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">
+                  Tournaments
+                </Link>
+              </>
+            )}
+            
+            {/* Show login/register when not authenticated, logout when authenticated */}
+            {!user ? (
+              <>
+                <Link 
+                  to="/login" 
+                  className="block text-gray-300 hover:text-purple-500 transition-colors py-2"
+                >
+                  Login
+                </Link>
+                <Link 
+                  to="/register" 
+                  className="block bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors mt-4"
+                >
+                  Register
+                </Link>
+              </>
+            ) : (
+              <button
+                onClick={handleLogout}
+                className="w-full bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors mt-4"
+              >
+                Logout
+              </button>
+            )}
           </div>
         </div>
       )}
