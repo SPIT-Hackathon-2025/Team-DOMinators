@@ -18,7 +18,7 @@ const Hero = () => {
         life: 5,
         power: 0.040,
         texture: "https://res.cloudinary.com/naker-io/image/upload/v1739033538/thfif3azl4c8vc3kiyov.png",
-        number: 65,
+        number: 71,
         colorStart: [53, 34, 197, 0.13],
         colorEnd: [86, 93, 184, 0.45],
         sizeStart: 1.57,
