@@ -33,34 +33,23 @@ const Navbar = () => {
             {/* Show these links only when user is authenticated */}
             {user && (
               <React.Fragment>
+                {user && user.type === 'player' && (
+              <>
+                <Link to="/player/home" className="text-gray-300 hover:text-purple-500">Home</Link>
+                <Link to="/marketplace" className="text-gray-300 hover:text-purple-500">Marketplace</Link>
+                <Link to="/tournaments" className="text-gray-300 hover:text-purple-500">Tournaments</Link>
+                <Link to="/community" className="text-gray-300 hover:text-purple-500">Community</Link>
+              </>
+            )}
+
+            {user && user.type === 'developer' && (
+              <>
+                <Link to="/developer/home" className="text-gray-300 hover:text-purple-500">Home</Link>
+                <Link to="/tournaments" className="text-gray-300 hover:text-purple-500">Tournaments</Link>
+                <Link to="/crowdfunding" className="text-gray-300 hover:text-purple-500">Crowdfunding</Link>
+              </>
+            )}
                 
-                {user.type === 'player' && (
-                  <Link to="/player/home" className="text-gray-300 hover:text-purple-500 transition-colors">
-                    Home
-                  </Link>
-                )}
-                  {user.type === 'developer' && (
-                  <Link to="/developer/home" className="text-gray-300 hover:text-purple-500 transition-colors">
-                    Home
-                  </Link>
-                )}
-                <Link to="/marketplace" className="text-gray-300 hover:text-purple-500 transition-colors">
-                  Marketplace
-                </Link>
-                <Link to="/tournaments" className="text-gray-300 hover:text-purple-500 transition-colors">
-                  Tournaments
-                </Link>
-                {/* Add Crowdfunding link if user is a developer */}
-                {user.type === 'player' && (
-                  <Link to="/community" className="text-gray-300 hover:text-purple-500 transition-colors">
-                    Community
-                  </Link>
-                )}
-                  {user.type === 'developer' && (
-                  <Link to="/crowdfunding" className="text-gray-300 hover:text-purple-500 transition-colors">
-                    Crowdfunding
-                  </Link>
-                )}
               </React.Fragment>
             )}
             
