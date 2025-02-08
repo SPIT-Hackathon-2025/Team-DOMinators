@@ -32,7 +32,7 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-8">
             {/* Show these links only when user is authenticated */}
             {user && (
-              <>
+              <React.Fragment>
                 <Link to="/" className="text-gray-300 hover:text-purple-500 transition-colors">
                   Home
                 </Link>
@@ -42,7 +42,13 @@ const Navbar = () => {
                 <Link to="/tournaments" className="text-gray-300 hover:text-purple-500 transition-colors">
                   Tournaments
                 </Link>
-              </>
+                {/* Add Crowdfunding link if user is a developer */}
+                {user.type === 'developer' && (
+                  <Link to="/crowdfunding" className="text-gray-300 hover:text-purple-500 transition-colors">
+                    Crowdfunding
+                  </Link>
+                )}
+              </React.Fragment>
             )}
             
             {/* Show login/register when not authenticated, logout when authenticated */}
@@ -91,7 +97,7 @@ const Navbar = () => {
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {/* Show these links only when user is authenticated */}
             {user && (
-              <>
+              <React.Fragment>
                 <Link to="/" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">
                   Home
                 </Link>
@@ -101,12 +107,18 @@ const Navbar = () => {
                 <Link to="/tournaments" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">
                   Tournaments
                 </Link>
-              </>
+                {/* Add Crowdfunding link if user is a developer */}
+                {user.type === 'developer' && (
+                  <Link to="/crowdfunding" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">
+                    Crowdfunding
+                  </Link>
+                )}
+              </React.Fragment>
             )}
             
             {/* Show login/register when not authenticated, logout when authenticated */}
             {!user ? (
-              <>
+              <React.Fragment>
                 <Link 
                   to="/login" 
                   className="block text-gray-300 hover:text-purple-500 transition-colors py-2"
@@ -119,7 +131,7 @@ const Navbar = () => {
                 >
                   Register
                 </Link>
-              </>
+              </React.Fragment>
             ) : (
               <button
                 onClick={handleLogout}

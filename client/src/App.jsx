@@ -15,6 +15,7 @@ import PHome from './pages/players/PHome';
 import DHome from './pages/developer/DHome';
 import Login from './pages/Login';
 import Register from './pages/SignUp';
+import Crowdfunding from './pages/developer/Crowdfunding'; // Import Crowdfunding component
 
 import { auth, db } from './components/firebase';
 
@@ -127,7 +128,7 @@ function TournamentRouter() {
 }
 
 function App() {
-  const [authInitialized, setAuthInitialized] = React.useState(false);
+  const [authIntialized, setAuthInitialized] = React.useState(false);
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, () => {
@@ -137,7 +138,7 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  if (!authInitialized) {
+  if (!authIntialized) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
@@ -186,6 +187,14 @@ function App() {
             element={
               <PrivateRoute allowedUserType="developer">
                 <DHome />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/crowdfunding"
+            element={
+              <PrivateRoute allowedUserType="developer">
+                <Crowdfunding />
               </PrivateRoute>
             }
           />

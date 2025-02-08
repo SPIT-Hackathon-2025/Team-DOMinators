@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { getDoc, doc } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { Gamepad, Code } from "lucide-react";
@@ -52,6 +52,8 @@ function Login() {
       ]);
 
       if (userDoc.exists() && userTypeDoc.exists() && userTypeDoc.data().type === userType) {
+        // Set user type in auth.currentUser
+        auth.currentUser.type = userType;
         toast.success("Welcome back! 🎮");
         setTimeout(() => {
           navigate(navigationPath);
@@ -74,10 +76,7 @@ function Login() {
         <h2 className="text-3xl font-bold text-white mb-6 text-center">Welcome Back</h2>
 
         <div className="grid grid-cols-2 gap-4 mb-8">
-          {[
-            { type: USER_TYPES.PLAYER, icon: Gamepad, label: "Player", description: "Access your games" },
-            { type: USER_TYPES.DEVELOPER, icon: Code, label: "Developer", description: "Manage your games" }
-          ].map(({ type, icon: Icon, label, description }) => (
+          {[USER_TYPES.PLAYER, USER_TYPES.DEVELOPER].map(type => (
             <button
               key={type}
               onClick={() => setFormData(prev => ({ ...prev, userType: type }))}
@@ -88,9 +87,9 @@ function Login() {
               }`}
               type="button"
             >
-              <Icon size={24} />
-              <span className="text-sm font-medium">{label}</span>
-              <span className="text-xs text-center opacity-75">{description}</span>
+              {type === USER_TYPES.PLAYER ? <Gamepad size={24} /> : <Code size={24} />}
+              <span className="text-sm font-medium">{type === USER_TYPES.PLAYER ? 'Player' : 'Developer'}</span>
+              <span className="text-xs text-center opacity-75">{type === USER_TYPES.PLAYER ? 'Access your games' : 'Manage your games'}</span>
             </button>
           ))}
         </div>
