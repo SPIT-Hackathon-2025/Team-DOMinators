@@ -49,15 +49,7 @@ const Navbar = () => {
                 <Link to="/community" className="text-gray-300 hover:text-purple-500">Community</Link>
               </>
             )}
-                {user.type === 'player' && (
-                  <>
-                    <Link to="/player/home" className="text-gray-300 hover:text-purple-500">Home</Link>
-                    <Link to="/market" className="text-gray-300 hover:text-purple-500">Marketplace</Link>
-                    <Link to="/Pgame" className="text-gray-300 hover:text-purple-500">Games</Link>
-                    <Link to="/tournaments" className="text-gray-300 hover:text-purple-500">Tournaments</Link>
-                    <Link to="/community" className="text-gray-300 hover:text-purple-500">Community</Link>
-                  </>
-                )}
+               
 
             {user && user.type === 'developer' && (
               <>
@@ -68,14 +60,6 @@ const Navbar = () => {
               </>
             )}
                 
-                {user.type === 'developer' && (
-                  <>
-                    <Link to="/developer/home" className="text-gray-300 hover:text-purple-500">Home</Link>
-                    <Link to="/Dgames" className="text-gray-300 hover:text-purple-500">Games</Link>
-                    <Link to="/tournaments" className="text-gray-300 hover:text-purple-500">Tournaments</Link>
-                    <Link to="/crowdfunding" className="text-gray-300 hover:text-purple-500">Crowdfunding</Link>
-                  </>
-                )}
               </React.Fragment>
             )}
             
