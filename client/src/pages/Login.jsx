@@ -1,43 +1,70 @@
+import React, { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { getDoc, doc } from "firebase/firestore";
-import React, { useState } from "react";
-import { auth, db } from "../components/firebase";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
 import { Gamepad, Code } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { auth, db } from "../components/firebase";
+
+// Constants for user types (matching registration)
+const USER_TYPES = {
+  PLAYER: 'player',
+  DEVELOPER: 'developer'
+};
 
 function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [userType, setUserType] = useState("");
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    userType: ""
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleLogin = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
+    const { email, password, userType } = formData;
     
     if (!userType) {
       toast.error("Please select your user type");
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
-      const collectionName = userType === "player" ? "Players" : "Developers";
-      const navigationPath = userType === "player" ? "/player/home" : "/developer/home";
+      const collectionName = userType === USER_TYPES.PLAYER ? "Players" : "Developers";
+      const navigationPath = userType === USER_TYPES.PLAYER ? "/player/home" : "/developer/home";
 
-      const userDoc = await getDoc(doc(db, collectionName, userCredential.user.uid));
-      const userTypeDoc = await getDoc(doc(db, "UserTypes", userCredential.user.uid));
+      // Check both user document and user type
+      const [userDoc, userTypeDoc] = await Promise.all([
+        getDoc(doc(db, collectionName, userCredential.user.uid)),
+        getDoc(doc(db, "UserTypes", userCredential.user.uid))
+      ]);
 
       if (userDoc.exists() && userTypeDoc.exists() && userTypeDoc.data().type === userType) {
-        toast.success("Login successful!");
-        navigate(navigationPath);
+        toast.success("Welcome back! 🎮");
+        setTimeout(() => {
+          navigate(navigationPath);
+        }, 1500);
       } else {
         await auth.signOut();
-        toast.error("Invalid user type or account not found.");
+        toast.error("Invalid user type or account not found. Please check your selection.");
       }
     } catch (error) {
-      toast.error(error.message);
+      const errorMessage = error?.message || "Login failed. Please check your credentials.";
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -48,33 +75,35 @@ function Login() {
 
         <div className="grid grid-cols-2 gap-4 mb-8">
           {[
-            { type: "player", icon: Gamepad, label: "Player" },
-            { type: "developer", icon: Code, label: "Developer" }
-          ].map(({ type, icon: Icon, label }) => (
+            { type: USER_TYPES.PLAYER, icon: Gamepad, label: "Player", description: "Access your games" },
+            { type: USER_TYPES.DEVELOPER, icon: Code, label: "Developer", description: "Manage your games" }
+          ].map(({ type, icon: Icon, label, description }) => (
             <button
               key={type}
-              onClick={() => setUserType(type)}
+              onClick={() => setFormData(prev => ({ ...prev, userType: type }))}
               className={`p-4 rounded-xl flex flex-col items-center gap-2 transition-all ${
-                userType === type 
+                formData.userType === type 
                   ? 'bg-purple-600 text-white shadow-lg scale-105' 
                   : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
+              type="button"
             >
               <Icon size={24} />
               <span className="text-sm font-medium">{label}</span>
+              <span className="text-xs text-center opacity-75">{description}</span>
             </button>
           ))}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
             <input
               type="email"
-              className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white"
-              placeholder="Enter email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              name="email"
+              className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              placeholder="Enter your email"
+              onChange={handleInputChange}
               required
             />
           </div>
@@ -83,25 +112,30 @@ function Login() {
             <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
             <input
               type="password"
-              className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white"
-              placeholder="Enter password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              name="password"
+              className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              placeholder="Enter your password"
+              onChange={handleInputChange}
               required
             />
           </div>
-          
+
           <button
             type="submit"
-            className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            disabled={isSubmitting || !formData.userType}
+            className={`w-full py-3 bg-purple-600 text-white rounded-lg transition-all ${
+              isSubmitting || !formData.userType
+                ? 'opacity-50 cursor-not-allowed' 
+                : 'hover:bg-purple-700 hover:shadow-lg transform hover:-translate-y-0.5'
+            }`}
           >
-            Sign In
+            {isSubmitting ? 'Signing In...' : 'Sign In'}
           </button>
 
           <p className="text-center text-sm text-gray-400">
-            New user?{" "}
+            New to the platform?{' '}
             <a href="/register" className="text-purple-400 hover:underline">
-              Register Here
+              Create Account
             </a>
           </p>
         </form>
@@ -111,90 +145,3 @@ function Login() {
 }
 
 export default Login;
-
-
-// import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
-// import { getDoc, setDoc, doc } from "firebase/firestore";
-// import React, { useState } from "react";
-// import { auth, db } from "../components/firebase";
-// import { toast } from "react-toastify";
-// import { useNavigate } from "react-router-dom";
-// import { Code, Gamepad2 } from "lucide-react";
-
-// function AuthPage({ isLogin }) {
-//   const [email, setEmail] = useState("");
-//   const [password, setPassword] = useState("");
-//   const [userType, setUserType] = useState("");
-//   const navigate = useNavigate();
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     if (!userType) {
-//       toast.error("Please select your user type", { position: "bottom-center" });
-//       return;
-//     }
-    
-//     try {
-//       let userCredential;
-//       if (isLogin) {
-//         userCredential = await signInWithEmailAndPassword(auth, email, password);
-//       } else {
-//         userCredential = await createUserWithEmailAndPassword(auth, email, password);
-//         await setDoc(doc(db, "Users", userCredential.user.uid), { type: userType, email });
-//       }
-      
-//       const userDoc = await getDoc(doc(db, "Users", userCredential.user.uid));
-//       if (userDoc.exists() && userDoc.data().type === userType) {
-//         toast.success("User authenticated successfully!", { position: "top-center" });
-//         navigate(userType === "player" ? "/playerDashboard" : "/developerDashboard");
-//       } else {
-//         await auth.signOut();
-//         toast.error("Invalid user type or account not found.", { position: "bottom-center" });
-//       }
-//     } catch (error) {
-//       toast.error(error.message, { position: "bottom-center" });
-//     }
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-4">
-//       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-//         <h2 className="text-3xl font-bold text-indigo-800 mb-6 text-center">{isLogin ? "Welcome Back" : "Create an Account"}</h2>
-
-//         <div className="grid grid-cols-2 gap-3 mb-8">
-//           {[{ type: "player", icon: Gamepad2, label: "Player" }, { type: "developer", icon: Code, label: "Developer" }].map(({ type, icon: Icon, label }) => (
-//             <button
-//               key={type}
-//               onClick={() => setUserType(type)}
-//               className={`p-4 rounded-xl flex flex-col items-center gap-2 transition-all ${userType === type ? 'bg-indigo-600 text-white shadow-lg scale-105' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-//             >
-//               <Icon size={24} />
-//               <span className="text-sm font-medium">{label}</span>
-//             </button>
-//           ))}
-//         </div>
-
-//         <form onSubmit={handleSubmit} className="space-y-4">
-//           <div>
-//             <label className="block text-sm font-medium mb-1">Email address</label>
-//             <input type="email" className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-600" placeholder="Enter email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-//           </div>
-
-//           <div>
-//             <label className="block text-sm font-medium mb-1">Password</label>
-//             <input type="password" className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-600" placeholder="Enter password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-//           </div>
-          
-//           <button type="submit" className="w-full py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">{isLogin ? "Sign In" : "Sign Up"}</button>
-          
-//           <p className="text-center text-sm text-gray-600">
-//             {isLogin ? "New user? " : "Already have an account? "}
-//             <a href={isLogin ? "/register" : "/login"} className="text-indigo-600 hover:underline">{isLogin ? "Register Here" : "Login Here"}</a>
-//           </p>
-//         </form>
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default AuthPage;

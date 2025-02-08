@@ -1,74 +1,90 @@
-// import React, { useEffect } from 'react';
-// import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-// import Navbar from './components/Navbar';
-// import Footer from './components/Footer';
-// import Market from './pages/players/Market';
-// import Tournament from './pages/players/Tournament';
-// import LandingPage from './pages/LandingPage';
-// import AuthPage from './pages/Login';
-// import PHome from './pages/players/PHome';
-// import DHome from './pages/developer/DHome';
-
-// function App() {
-  
-
-//   return (
-//     <Router>
-//       <div className="min-h-screen bg-gray-900 text-white">
-//         <Navbar />
-//         <Routes>
-//           <Route path="/" element={
-//             <>
-//               <LandingPage />    
-//             </>
-//           } />
-//           <Route 
-//           path="/login" 
-//           element={
-//             <AuthPage  
-//               // setIsLoggedIn={setIsLoggedIn} 
-//               // setUserType={setUserType} 
-//             />
-//           } 
-//         />
-//             <Route path='/marketplace' element={<Market/>}/>
-//             <Route path="/tournaments" element={<Tournament />} />
-//         </Routes>
-//         <Footer />
-//       </div>
-//     </Router>
-//   );
-// }
-
-// export default App;
-
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
+import { getDoc, doc } from "firebase/firestore";
 import 'react-toastify/dist/ReactToastify.css';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Market from './pages/players/Market';
 import Tournament from './pages/players/Tournament';
+import DeveloperTournament from './pages/developer/DeveloperTournament';
 import LandingPage from './pages/LandingPage';
 import PHome from './pages/players/PHome';
 import DHome from './pages/developer/DHome';
 import Login from './pages/Login';
 import Register from './pages/SignUp';
 
-import { auth } from './components/firebase';
+import { auth, db } from './components/firebase';
 
-function PrivateRoute({ children, userType }) {
+function PrivateRoute({ children, allowedUserType }) {
+  const [userType, setUserType] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
   const user = auth.currentUser;
-  
+
+  React.useEffect(() => {
+    const checkUserType = async () => {
+      if (user) {
+        try {
+          const userTypeDoc = await getDoc(doc(db, "UserTypes", user.uid));
+          if (userTypeDoc.exists()) {
+            setUserType(userTypeDoc.data().type);
+          }
+        } catch (error) {
+          console.error("Error fetching user type:", error);
+        }
+      }
+      setLoading(false);
+    };
+
+    checkUserType();
+  }, [user]);
+
   if (!user) {
     return <Navigate to="/login" />;
   }
-  
-  // Additional userType check can be implemented here if needed
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+      </div>
+    );
+  }
+
+  if (allowedUserType && userType !== allowedUserType) {
+    return <Navigate to={`/${userType}/home`} />;
+  }
+
   return children;
+}
+
+function TournamentRouter() {
+  const [userType, setUserType] = React.useState(null);
+  const user = auth.currentUser;
+
+  React.useEffect(() => {
+    const checkUserType = async () => {
+      if (user) {
+        const userTypeDoc = await getDoc(doc(db, "UserTypes", user.uid));
+        if (userTypeDoc.exists()) {
+          setUserType(userTypeDoc.data().type);
+        }
+      }
+    };
+
+    checkUserType();
+  }, [user]);
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  if (userType === "developer") {
+    return <DeveloperTournament />;
+  }
+
+  return <Tournament />;
 }
 
 function App() {
@@ -87,7 +103,7 @@ function App() {
           <Route
             path="/player/home"
             element={
-              <PrivateRoute userType="player">
+              <PrivateRoute allowedUserType="player">
                 <PHome />
               </PrivateRoute>
             }
@@ -95,16 +111,18 @@ function App() {
           <Route
             path="/marketplace"
             element={
-              <PrivateRoute userType="player">
+              <PrivateRoute allowedUserType="player">
                 <Market />
               </PrivateRoute>
             }
           />
+          
+          {/* Tournament route with dynamic rendering */}
           <Route
             path="/tournaments"
             element={
-              <PrivateRoute userType="player">
-                <Tournament />
+              <PrivateRoute>
+                <TournamentRouter />
               </PrivateRoute>
             }
           />
@@ -113,7 +131,7 @@ function App() {
           <Route
             path="/developer/home"
             element={
-              <PrivateRoute userType="developer">
+              <PrivateRoute allowedUserType="developer">
                 <DHome />
               </PrivateRoute>
             }
