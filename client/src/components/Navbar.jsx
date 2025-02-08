@@ -43,7 +43,12 @@ const Navbar = () => {
                   Tournaments
                 </Link>
                 {/* Add Crowdfunding link if user is a developer */}
-                {user.type === 'developer' && (
+                {user.type === 'player' && (
+                  <Link to="/community" className="text-gray-300 hover:text-purple-500 transition-colors">
+                    Community
+                  </Link>
+                )}
+                  {user.type === 'developer' && (
                   <Link to="/crowdfunding" className="text-gray-300 hover:text-purple-500 transition-colors">
                     Crowdfunding
                   </Link>
@@ -111,6 +116,11 @@ const Navbar = () => {
                 {user.type === 'developer' && (
                   <Link to="/crowdfunding" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">
                     Crowdfunding
+                  </Link>
+                )}
+                {user.type === 'player' && (
+                  <Link to="/community" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">
+                    Community
                   </Link>
                 )}
               </React.Fragment>

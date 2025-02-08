@@ -18,6 +18,7 @@ import Register from './pages/SignUp';
 import Crowdfunding from './pages/developer/Crowdfunding'; // Import Crowdfunding component
 
 import { auth, db } from './components/firebase';
+import CommunityPage from './pages/players/CommunityPage';
 
 function PrivateRoute({ children, allowedUserType }) {
   const [userType, setUserType] = React.useState(null);
@@ -171,6 +172,14 @@ function App() {
             element={
               <PrivateRoute allowedUserType="player">
                 <Market />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/community"
+            element={
+              <PrivateRoute allowedUserType="player">
+                <CommunityPage />
               </PrivateRoute>
             }
           />
