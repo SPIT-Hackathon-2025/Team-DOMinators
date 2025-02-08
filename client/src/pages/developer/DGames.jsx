@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import abi from '../../../abi.json';
+import { motion } from 'framer-motion';
 
 const CONTRACT_ADDRESS = "0x1aEC03d66c2Caee890AdAE3aF87E397e26F5456b";
 const CONTRACT_ABI = abi;
@@ -51,7 +52,6 @@ const DGames = () => {
         const userBalance = await gameContract.getUserBalance(accounts[0]);
         setBalance(ethers.utils.formatEther(userBalance));
 
-        // Fetch all NFTs after contract initialization
         await fetchAllNFTs(gameContract);
       }
     };
@@ -61,15 +61,11 @@ const DGames = () => {
   const fetchAllNFTs = async (contractInstance) => {
     setIsLoading(true);
     try {
-      // Get all NFTMinted events from contract deployment
       const filter = contractInstance.filters.NFTMinted();
       const events = await contractInstance.queryFilter(filter);
       
-      // Process events into NFT objects
       const nfts = await Promise.all(events.map(async (event) => {
         const { owner, tokenId, tokenURI, ipfsHash, price, gameType } = event.args;
-        
-        // Get current owner and sale status
         const currentOwner = await contractInstance.ownerOf(tokenId);
         const details = await contractInstance.nftDetails(tokenId);
         
@@ -86,7 +82,6 @@ const DGames = () => {
 
       setAllNFTs(nfts);
 
-      // Group NFTs by game type
       const grouped = nfts.reduce((acc, nft) => {
         if (!acc[nft.gameType]) {
           acc[nft.gameType] = [];
@@ -103,13 +98,11 @@ const DGames = () => {
     setIsLoading(false);
   };
 
-  // Function to trade NFT
   const handleTradeNFT = async (tokenId) => {
     try {
       const tx = await contract.tradeNFT(tokenId);
       await tx.wait();
       alert('NFT traded successfully!');
-      // Refresh NFT list
       await fetchAllNFTs(contract);
     } catch (error) {
       console.error('Error trading NFT:', error);
@@ -153,7 +146,6 @@ const DGames = () => {
       await tx.wait();
       alert('NFT minted successfully!');
       clearNFTForm();
-      // Refresh NFT list after minting
       await fetchAllNFTs(contract);
     } catch (error) {
       console.error('Error minting NFT:', error);
@@ -182,211 +174,232 @@ const DGames = () => {
   };
 
   const NFTCard = ({ nft }) => (
-    <div className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
-      <p className="font-medium">Token ID: {nft.tokenId}</p>
-      <p className="text-sm truncate">Owner: {nft.owner}</p>
-      <p className="text-sm">Price: {nft.price} ESPX</p>
-      <p className="text-sm">Game Type: {nft.gameType}</p>
-      <p className="text-sm truncate">IPFS Hash: {nft.ipfsHash}</p>
+    <motion.div 
+      className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300"
+      whileHover={{ scale: 1.02 }}
+    >
+      <p className="text-lg font-semibold mb-2 text-white">Token ID: {nft.tokenId}</p>
+      <p className="text-sm text-gray-300 truncate mb-1">Owner: {nft.owner}</p>
+      <p className="text-sm text-gray-300 mb-1">Price: {nft.price} ESPX</p>
+      <p className="text-sm text-gray-300 mb-1">Game Type: {nft.gameType}</p>
+      <p className="text-sm text-gray-300 truncate mb-3">IPFS Hash: {nft.ipfsHash}</p>
       {nft.forSale && nft.owner !== account && (
-        <button
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={() => handleTradeNFT(nft.tokenId)}
-          className="mt-2 w-full bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition-colors text-sm"
+          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-sm hover:shadow-md"
         >
           Buy NFT
-        </button>
+        </motion.button>
       )}
-    </div>
+    </motion.div>
   );
 
   return (
-    <div className="min-h-screen p-6">
-      {/* Wallet info section */}
-      <div className="mb-8 mt-16 rounded-lg p-4 shadow-md">
-        <div className="flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-700 font-medium mb-2 md:mb-0">
-            Wallet: <span className="text-blue-600">{account}</span>
-          </p>
-          <p className="text-gray-700 font-medium">
-            Balance: <span className="text-green-600">{balance} ESPX</span>
-          </p>
+    <div className="min-h-screen bg-gray-900 text-white p-8">
+      <div className="max-w-7xl mx-auto mt-16">
+        <div className="mb-8 bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-lg">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-4 md:mb-0">
+              <p className="text-gray-300 text-sm mb-1">Wallet Address</p>
+              <p className="text-purple-400 font-medium truncate">{account}</p>
+            </div>
+            <div>
+              <p className="text-gray-300 text-sm mb-1">Balance</p>
+              <p className="text-green-400 font-medium">{balance} ESPX</p>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="flex mb-6">
-        <button
-          className={`px-6 py-2 mr-2 rounded-t-lg font-medium ${
-            activeTab === 'games' ? 'text-blue-600 shadow-md' : 'bg-gray-200 text-gray-600'
-          }`}
-          onClick={() => setActiveTab('games')}
-        >
-          Games
-        </button>
-        <button
-          className={`px-6 py-2 rounded-t-lg font-medium ${
-            activeTab === 'nfts' ? 'text-blue-600 shadow-md' : 'bg-gray-200 text-gray-600'
-          }`}
-          onClick={() => setActiveTab('nfts')}
-        >
-          NFTs
-        </button>
-      </div>
+        <div className="flex mb-6 space-x-2">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+              activeTab === 'games' 
+                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md' 
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+            onClick={() => setActiveTab('games')}
+          >
+            Games
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+              activeTab === 'nfts' 
+                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md' 
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+            onClick={() => setActiveTab('nfts')}
+          >
+            NFTs
+          </motion.button>
+        </div>
 
-      {/* Content */}
-      <div className="rounded-lg shadow-md p-6">
-        {activeTab === 'games' ? (
-          <div className="space-y-8">
-            {/* Game Forms */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Upload Game</h3>
-              <form onSubmit={uploadGame} className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Game Type"
-                  value={gameType}
-                  onChange={(e) => setGameType(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  type="submit"
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  Upload Game
-                </button>
-              </form>
-            </div>
-
-            {/* Get Game Details Form */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Get Game Details</h3>
-              <form onSubmit={getGameDetails} className="space-y-4">
-                <input
-                  type="number"
-                  placeholder="Game ID"
-                  value={gameId}
-                  onChange={(e) => setGameId(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  type="submit"
-                  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
-                >
-                  Get Details
-                </button>
-              </form>
-              {gameDetails && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-md">
-                  <p>Game Type: {gameDetails.gameType}</p>
-                  <p>Developer: {gameDetails.developer}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {/* NFT Type Filter */}
-            <div className="flex flex-wrap gap-2 mb-4">
-              {gameTypes.map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setSelectedType(type)}
-                  className={`px-4 py-2 rounded-md ${
-                    selectedType === type
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </button>
-              ))}
-            </div>
-
-            {/* NFTs Grid */}
-            {isLoading ? (
-              <div className="text-center py-8">Loading NFTs...</div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {selectedType === 'all'
-                  ? allNFTs.map((nft) => <NFTCard key={nft.tokenId} nft={nft} />)
-                  : groupedNFTs[selectedType]?.map((nft) => (
-                      <NFTCard key={nft.tokenId} nft={nft} />
-                    ))}
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-lg p-6">
+          {activeTab === 'games' ? (
+            <div className="space-y-8">
+              <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg p-6">
+                <h3 className="text-xl font-semibold mb-6 text-white">Upload Game</h3>
+                <form onSubmit={uploadGame} className="space-y-4">
+                  <input
+                    type="text"
+                    placeholder="Game Type"
+                    value={gameType}
+                    onChange={(e) => setGameType(e.target.value)}
+                    className="w-full bg-gray-600/50 rounded-lg px-4 py-3 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  />
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-md hover:shadow-lg font-medium"
+                  >
+                    Upload Game
+                  </motion.button>
+                </form>
               </div>
-            )}
 
-            {/* Mint NFT Form */}
-            <div className="mt-8">
-              <h3 className="text-lg font-semibold mb-4">Mint NFT</h3>
-              <form onSubmit={mintNFT} className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Token URI"
-                  value={tokenURI}
-                  onChange={(e) => setTokenURI(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  type="text"
-                  placeholder="IPFS Hash"
-                  value={ipfsHash}
-                  onChange={(e) => setIpfsHash(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="Price (ESPX)"
-                  value={nftPrice}
-                  onChange={(e) => setNftPrice(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  type="number"
-                  placeholder="Game ID"
-                  value={nftGameId}
-                  onChange={(e) => setNftGameId(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  type="submit"
-                  className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors"
-                >
-                  Mint NFT
-                </button>
-              </form>
+              <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg p-6">
+                <h3 className="text-xl font-semibold mb-6 text-white">Get Game Details</h3>
+                <form onSubmit={getGameDetails} className="space-y-4">
+                  <input
+                    type="number"
+                    placeholder="Game ID"
+                    value={gameId}
+                    onChange={(e) => setGameId(e.target.value)}
+                    className="w-full bg-gray-600/50 rounded-lg px-4 py-3 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  />
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white px-4 py-3 rounded-lg hover:from-green-700 hover:to-teal-700 transition-all duration-300 shadow-md hover:shadow-lg font-medium"
+                  >
+                    Get Details
+                  </motion.button>
+                </form>
+                {gameDetails && (
+                  <div className="mt-6 p-4 bg-gray-600/50 rounded-lg shadow-sm">
+                    <p className="mb-2 text-gray-300"><span className="font-medium">Game Type:</span> {gameDetails.gameType}</p>
+                    <p className="text-gray-300"><span className="font-medium">Developer:</span> {gameDetails.developer}</p>
+                  </div>
+                )}
+              </div>
             </div>
+          ) : (
+            <div className="space-y-8">
+              <div className="flex flex-wrap gap-2 mb-6">
+                {gameTypes.map((type) => (
+                  <motion.button
+                    key={type}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setSelectedType(type)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+                      selectedType === type
+                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </motion.button>
+                ))}
+              </div>
 
-            {/* Get NFT Details Form */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Get NFT Details</h3>
-              <form onSubmit={getNFTDetails} className="space-y-4">
-                <input
-                  type="number"
-                  placeholder="NFT ID"
-                  value={nftId}
-                  onChange={(e) => setNftId(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  type="submit"
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  Get Details
-                </button>
-              </form>
-              {nftDetails && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-md">
-                  <p>Owner: {nftDetails.owner}</p>
-                  <p>Price: {ethers.utils.formatEther(nftDetails.price)} ESPX</p>
-                  <p>For Sale: {nftDetails.forSale ? 'Yes' : 'No'}</p>
-                  <p>Game Type: {nftDetails.gameType}</p>
-                  <p>IPFS Hash: {nftIpfsHash}</p>
+              {isLoading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+                  <p className="mt-4 text-gray-400">Loading NFTs...</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {selectedType === 'all'
+                    ? allNFTs.map((nft) => <NFTCard key={nft.tokenId} nft={nft} />)
+                    : groupedNFTs[selectedType]?.map((nft) => (
+                        <NFTCard key={nft.tokenId} nft={nft} />
+                      ))}
                 </div>
               )}
+
+              <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg p-6 mt-8">
+                <h3 className="text-xl font-semibold mb-6 text-white">Mint NFT</h3>
+                <form onSubmit={mintNFT} className="space-y-4">
+                  <input
+                    type="text"
+                    placeholder="Token URI"
+                    value={tokenURI}
+                    onChange={(e) => setTokenURI(e.target.value)}
+                    className="w-full bg-gray-600/50 rounded-lg px-4 py-3 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  />
+                  <input
+                    type="text"
+                    placeholder="IPFS Hash"
+                    value={ipfsHash}
+                    onChange={(e) => setIpfsHash(e.target.value)}
+                    className="w-full bg-gray-600/50 rounded-lg px-4 py-3 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  />
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Price (ESPX)"
+                    value={nftPrice}
+                    onChange={(e) => setNftPrice(e.target.value)}
+                    className="w-full bg-gray-600/50 rounded-lg px-4 py-3 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Game ID"
+                    value={nftGameId}
+                    onChange={(e) => setNftGameId(e.target.value)}
+                    className="w-full bg-gray-600/50 rounded-lg px-4 py-3 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  />
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-md hover:shadow-lg font-medium"
+                  >
+                    Mint NFT
+                  </motion.button>
+                </form>
+              </div>
+
+              <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg p-6">
+                <h3 className="text-xl font-semibold mb-6 text-white">Get NFT Details</h3>
+                <form onSubmit={getNFTDetails} className="space-y-4">
+                  <input
+                    type="number"
+                    placeholder="NFT ID"
+                    value={nftId}
+                    onChange={(e) => setNftId(e.target.value)}
+                    className="w-full bg-gray-600/50 rounded-lg px-4 py-3 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  />
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-md hover:shadow-lg font-medium"
+                  >
+                    Get Details
+                  </motion.button>
+                </form>
+                {nftDetails && (
+                  <div className="mt-6 p-4 bg-gray-600/50 rounded-lg shadow-sm">
+                    <p className="mb-2 text-gray-300"><span className="font-medium">Owner:</span> {nftDetails.owner}</p>
+                    <p className="mb-2 text-gray-300"><span className="font-medium">Price:</span> {ethers.utils.formatEther(nftDetails.price)} ESPX</p>
+                    <p className="mb-2 text-gray-300"><span className="font-medium">For Sale:</span> {nftDetails.forSale ? 'Yes' : 'No'}</p>
+                    <p className="mb-2 text-gray-300"><span className="font-medium">Game Type:</span> {nftDetails.gameType}</p>
+                    <p className="text-gray-300"><span className="font-medium">IPFS Hash:</span> {nftIpfsHash}</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
