@@ -154,6 +154,7 @@ import { ethers } from "ethers";
 import ABI from "../../../abi.json";
 import TournamentDashboard from "../players/Tournament";
 import tournament from '../../assets/tournament.png'
+import Tournament from "../../components/Tournaments";
 const TournamentManager = () => {
   const [tournamentName, setTournamentName] = useState("");
   const [prizePool, setPrizePool] = useState("");
@@ -310,13 +311,13 @@ const TournamentManager = () => {
       {/* Main Content */}
       <div className="mt-6">
         {activeTab === "active" ? (
-          <TournamentDashboard />
+          <Tournament />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {closedTournaments.map((tournament) => (
               <div
                 key={tournament.id}
-                className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+                className="bg-gray p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
               >
                 <h3 className="text-xl font-semibold mb-3">{tournament.name}</h3>
                 <div className="space-y-2">
