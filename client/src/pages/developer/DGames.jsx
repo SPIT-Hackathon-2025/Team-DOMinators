@@ -5,7 +5,7 @@ import details from '../../assets/details.jpg';
 import upload from '../../assets/upload.png';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-
+import TransactionHistory from '../TransactionHistory';
 const CONTRACT_ADDRESS = "0x1aEC03d66c2Caee890AdAE3aF87E397e26F5456b";
 const CONTRACT_ABI = abi;
 
@@ -491,6 +491,7 @@ const DGames = () => {
             </div>
           )}
         </div>
+        <TransactionHistory />
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import ABI from "../../../abi.json";
-
+import TournamentDashboard from "../players/Tournament";
 const TournamentManager = () => {
   const [tournamentName, setTournamentName] = useState("");
   const [prizePool, setPrizePool] = useState("");
@@ -140,22 +140,7 @@ const TournamentManager = () => {
 
      
       {/* Tournament List Section */}
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Tournaments</h2>
-        <div className="space-y-4">
-          {tournaments.map((tournament) => (
-            <div key={tournament.id} className="p-4 border border-gray-300 rounded">
-              <h3 className="text-lg font-bold">Tournament ID: {tournament.id}</h3>
-              <p>Name: {tournament.name}</p>
-              <p>Prize Pool: {ethers.utils.formatEther(tournament.prizePool)} ESPX</p>
-              <p>Status: {tournament.status === 0 ? "Active" : "Closed"}</p>
-              <p>Winner: {tournament.winner || "Not yet determined"}</p>
-              <p>Players: {tournament.players.length}</p>
-              <p>Split Ratios: {tournament.splitRatios.join(", ")}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+      <TournamentDashboard/>
     </div>
   );
 };
