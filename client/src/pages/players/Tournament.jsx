@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
+import Leaderboard from '../../components/Leaderboard';
 
 const TournamentDashboard = () => {
   const [tournaments, setTournaments] = useState([]);
@@ -109,6 +110,7 @@ const TournamentDashboard = () => {
 
   return (
     <div className="min-h-screen px-8 py-22">
+        <Leaderboard />
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold  text-purple-400 to-pink-400 bg-clip-text mb-8">Active Tournaments</h1>
         
@@ -167,6 +169,7 @@ const TournamentDashboard = () => {
           </div>
         )}
       </div>
+    
     </div>
   );
 };

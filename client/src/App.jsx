@@ -23,6 +23,7 @@ import DGames from './pages/developer/DGames';
 import Market from './pages/players/Market';
 import ProposalComponent from './pages/developer/governance';
 import BalanceDisplay from './Balance';
+import Leaderboard from './components/Leaderboard';
 function PrivateRoute({ children, allowedUserType }) {
   const [userType, setUserType] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
@@ -192,6 +193,14 @@ function App() {
             element={
               <PrivateRoute allowedUserType="player">
                 <CommunityPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/leaderboard"
+            element={
+              <PrivateRoute allowedUserType="player">
+                <Leaderboard />
               </PrivateRoute>
             }
           />
