@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Hero from '../../components/Hero';
 import Features from '../../components/Features';
-import DeveloperChatbot from './DeveloperAiAgent';
 const DHome = () => {
   return (
     
@@ -10,7 +9,7 @@ const DHome = () => {
       
          <Hero />
          <Features />
-         <DeveloperChatbot/>
+         
     </div>
   )
 }

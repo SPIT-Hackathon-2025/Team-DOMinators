@@ -8,6 +8,7 @@ import axios from 'axios';
 import TransactionHistory from '../TransactionHistory';
 const CONTRACT_ADDRESS = "0x1aEC03d66c2Caee890AdAE3aF87E397e26F5456b";
 const CONTRACT_ABI = abi;
+import DeveloperChatbot from './DeveloperAiAgent';
 
 const DGames = () => {
   const [activeTab, setActiveTab] = useState('games');
@@ -492,6 +493,7 @@ const DGames = () => {
           )}
         </div>
         <TransactionHistory />
+        <DeveloperChatbot/>
       </div>
     </div>
   );

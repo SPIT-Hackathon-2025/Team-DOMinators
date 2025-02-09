@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ethers } from 'ethers';
 import { Unplug, SendHorizontal, MessageCircle } from 'lucide-react';
-import abi from '../../../abi.json'; // Replace with the ABI of EspeonXNFT
+import abi from '../abi.json'; // Replace with the ABI of EspeonXNFT
 
-const DeveloperChatbot = () => {
+const PlayerChatbot = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isConnected, setIsConnected] = useState(false);
@@ -13,7 +13,7 @@ const DeveloperChatbot = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const chatRef = useRef(null);
 
-  const CA = "0x1aEC03d66c2Caee890AdAE3aF87E397e26F5456b";// Replace with your EspeonXNFT contract address
+  const CA = "0xYourContractAddress"; // Replace with your EspeonXNFT contract address
   const GEMINI_API_KEY = 'AIzaSyCFKswhga9q7KF-qZ4ZzwcTxZRtrg6sb7Y';
 
   const CONTRACT_ABI = abi; // Replace with the ABI of EspeonXNFT
@@ -42,7 +42,7 @@ const DeveloperChatbot = () => {
       const address = await signer.getAddress();
       setWalletAddress(address);
       setIsConnected(true);
-      addMessage("Wallet connected successfully! Hi I am your Developer AI Agent, How may I help you?", true);
+      addMessage("Wallet connected successfully! Hi, I am your Player AI Agent. How may I assist you today?", true);
     } catch (error) {
       addMessage("Failed to connect wallet: " + error.message, true);
     }
@@ -61,7 +61,7 @@ const DeveloperChatbot = () => {
             parts: [{
               text: `You are an AI assistant for a blockchain-based EspeonX platform.
                      Parse this user request and respond with a JSON object containing 'function' and 'parameters'.
-                     Available functions: uploadGame, mintNFT, tradeNFT, createTournament, joinTournament, distributePrize, startCrowdfunding, donate, createProposal, transferTokens, getTransactionHistory, getTokenDetails, getTournamentDetails, getGameDetails.
+                     Available functions: joinTournament, tradeNFT, donate, getUserBalance, getTransactionHistory, getTokenDetails, getTournamentDetails.
                      Give answer in the language of the user.
                      
                      User request: "${userInput}"
@@ -74,9 +74,9 @@ const DeveloperChatbot = () => {
                      
                      For functions, respond with format:
                      {
-                       "function": "getTransactionHistory",
+                       "function": "joinTournament",
                        "parameters": {
-                         "tokenId": 1
+                         "tournamentId": 1
                        }
                      }`
             }]
@@ -89,9 +89,6 @@ const DeveloperChatbot = () => {
           },
         })
       });
-  
-      // ... rest of the code
-   
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -121,7 +118,7 @@ const DeveloperChatbot = () => {
         console.error('Parse error:', parseError);
         throw new Error(`Failed to parse AI response: ${parseError.message}`);
       }
-    }  catch (error) {
+    } catch (error) {
       console.error('AI Processing error:', error);
       addMessage(`Error: ${error.message}. Please try again.`, true);
       return null;
@@ -144,199 +141,100 @@ const DeveloperChatbot = () => {
       let tx;
       let result;
       switch (action.function) {
-        case 'uploadGame':
-          tx = await contract.uploadGame(action.params.gameType);
-          break;
-        case 'mintNFT':
-          tx = await contract.mintNFT(action.params.tokenURI, action.params.ipfsHash, action.params.price, action.params.gameId);
+        case 'joinTournament':
+          tx = await contract.joinTournament(action.params.tournamentId);
           break;
         case 'tradeNFT':
           tx = await contract.tradeNFT(action.params.tokenId);
           break;
-        case 'createTournament':
-          tx = await contract.createTournament(action.params.name, action.params.prizePool, action.params.splitRatios);
-          break;
-        case 'joinTournament':
-          tx = await contract.joinTournament(action.params.tournamentId);
-          break;
-        case 'distributePrize':
-          tx = await contract.distributePrize(action.params.tournamentId, action.params.winners, action.params.totalPrize);
-          break;
-        case 'startCrowdfunding':
-          tx = await contract.startCrowdfunding(action.params.description, action.params.goalAmount);
-          break;
         case 'donate':
           tx = await contract.donate(action.params.crowdfundingId, action.params.amount);
           break;
-        case 'createProposal':
-          tx = await contract.createProposal(action.params.description);
-          break;
-        case 'transferTokens':
-          tx = await contract.transferTokens(action.params.to, action.params.amount);
-          break;
-          case 'getTransactionHistory':
-            result = await contract.getTransactionHistory(action.params.tokenId);
-            addMessage(`Transaction History for Token ID ${action.params.tokenId}: ${JSON.stringify(result, null, 2)}`, true);
-            return;
-    
-          case 'getTokenDetails':
-            result = await contract.getNFTIPFSHash(action.params.tokenId);
-            const details = await contract.nftDetails(action.params.tokenId);
-            addMessage(`Token Details for Token ID ${action.params.tokenId}:
-              - IPFS Hash: ${result}
-              - Price: ${details.price}
-              - For Sale: ${details.forSale ? 'Yes' : 'No'}`, true);
-            return;
-    
-          case 'getTournamentDetails':
-            result = await contract.getTournamentDetails(action.params.tournamentId);
-            addMessage(`Tournament Details for Tournament ID ${action.params.tournamentId}: ${JSON.stringify(result, null, 2)}`, true);
-            return;
-    
-          case 'getGameDetails':
-            result = await contract.getGameDetails(action.params.gameId);
-            addMessage(`Game Details for Game ID ${action.params.gameId}: ${JSON.stringify(result, null, 2)}`, true);
-            return;
-    
-          default:
-            throw new Error('Unknown function');
-        }
-      } catch (error) {
-        addMessage("Transaction failed: " + error.message, true);
+        case 'getUserBalance':
+          result = await contract.getUserBalance(walletAddress);
+          addMessage(`Your balance is: ${result} ESPX tokens`, true);
+          return;
+        case 'getTransactionHistory':
+          result = await contract.getTransactionHistory(action.params.tokenId);
+          addMessage(`Transaction History for Token ID ${action.params.tokenId}: ${JSON.stringify(result, null, 2)}`, true);
+          return;
+        case 'getTokenDetails':
+          result = await contract.getNFTIPFSHash(action.params.tokenId);
+          const details = await contract.nftDetails(action.params.tokenId);
+          addMessage(`Token Details for Token ID ${action.params.tokenId}:
+            - IPFS Hash: ${result}
+            - Price: ${details.price}
+            - For Sale: ${details.forSale ? 'Yes' : 'No'}`, true);
+          return;
+        case 'getTournamentDetails':
+          result = await contract.getTournamentDetails(action.params.tournamentId);
+          addMessage(`Tournament Details for Tournament ID ${action.params.tournamentId}: ${JSON.stringify(result, null, 2)}`, true);
+          return;
+        default:
+          throw new Error('Unknown function');
       }
-      setShowModal(false);
-      setPendingAction(null);
-    };
+      
+      if (tx) {
+        const receipt = await tx.wait();
+        addMessage(`Transaction successful! Hash: ${receipt.transactionHash}`, true);
+      }
+    } catch (error) {
+      addMessage("Transaction failed: " + error.message, true);
+    }
+    setShowModal(false);
+    setPendingAction(null);
+  };
 
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-      if (!input.trim()) return;
-    
-      addMessage(input, false);
-      setInput('');
-    
-      if (!isConnected) {
-        addMessage("Please connect your wallet first!", true);
-        return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+
+    addMessage(input, false);
+    setInput('');
+
+    if (!isConnected) {
+      addMessage("Please connect your wallet first!", true);
+      return;
+    }
+
+    const action = await processWithGemini(input);
+    if (action) {
+      if (action.function.startsWith('get')) {
+        // Directly execute read-only functions without confirmation
+        executeTransaction(action);
+      } else {
+        setPendingAction(action);
+        setShowModal(true);
       }
-    
-      const action = await processWithGemini(input);
-      if (action) {
-        if (action.function.startsWith('get')) {
-          // Directly execute read-only functions without confirmation
-          executeTransaction(action);
-        } else {
-          setPendingAction(action);
-          setShowModal(true);
-        }
-      }
-    };
+    }
+  };
 
   const formatTransactionDetails = (action) => {
     const details = [];
     
     switch (action.function) {
-      case 'uploadGame':
-        details.push(
-          ['Game Type', action.params.gameType]
-        );
-        break;
-      
-      case 'mintNFT':
-        details.push(
-          ['Token URI', action.params.tokenURI],
-          ['IPFS Hash', action.params.ipfsHash],
-          ['Price', action.params.price],
-          ['Game ID', action.params.gameId]
-        );
-        break;
-      
-      case 'tradeNFT':
-        details.push(
-          ['Token ID', action.params.tokenId]
-        );
-        break;
-      
-      case 'createTournament':
-        details.push(
-          ['Name', action.params.name],
-          ['Prize Pool', action.params.prizePool],
-          ['Split Ratios', action.params.splitRatios.join(', ')]
-        );
-        break;
-      
       case 'joinTournament':
         details.push(
           ['Tournament ID', action.params.tournamentId]
         );
         break;
-      
-      case 'distributePrize':
+      case 'tradeNFT':
         details.push(
-          ['Tournament ID', action.params.tournamentId],
-          ['Winners', action.params.winners.join(', ')],
-          ['Total Prize', action.params.totalPrize]
+          ['Token ID', action.params.tokenId]
         );
         break;
-      
-      case 'startCrowdfunding':
-        details.push(
-          ['Description', action.params.description],
-          ['Goal Amount', action.params.goalAmount]
-        );
-        break;
-      
       case 'donate':
         details.push(
           ['Crowdfunding ID', action.params.crowdfundingId],
           ['Amount', action.params.amount]
         );
         break;
-      
-      case 'createProposal':
-        details.push(
-          ['Description', action.params.description]
-        );
-        break;
-      
-      case 'transferTokens':
-        details.push(
-          ['To', action.params.to],
-          ['Amount', action.params.amount]
-        );
-        break;
-      
+      default:
+        details.push(['Details', 'Unknown transaction type']);
+    }
     
-        case 'getTransactionHistory':
-          details.push(
-            ['Token ID', action.params.tokenId]
-          );
-          break;
-    
-        case 'getTokenDetails':
-          details.push(
-            ['Token ID', action.params.tokenId]
-          );
-          break;
-    
-        case 'getTournamentDetails':
-          details.push(
-            ['Tournament ID', action.params.tournamentId]
-          );
-          break;
-    
-        case 'getGameDetails':
-          details.push(
-            ['Game ID', action.params.gameId]
-          );
-          break;
-    
-        default:
-          details.push(['Details', 'Unknown transaction type']);
-      }
-      
-      return details;
-    };
+    return details;
+  };
 
   const renderModal = () => {
     if (!showModal || !pendingAction) return null;
@@ -347,7 +245,7 @@ const DeveloperChatbot = () => {
       .replace(/^./, str => str.toUpperCase());
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center z-10 justify-center p-4">
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
         <div className="bg-white p-6 rounded-lg max-w-md w-full">
           <h2 className="text-xl font-bold mb-4">Confirm Transaction</h2>
           <div className="mb-6">
@@ -400,7 +298,7 @@ const DeveloperChatbot = () => {
       {isChatOpen && (
         <div className="absolute bottom-16 right-0 w-96 h-[500px] bg-white rounded-lg shadow-lg flex flex-col">
           <div className="mb-4 flex justify-between items-center p-4 border-b">
-            <h1 className="text-2xl font-bold text-gray-800">Developer AI Agent</h1>
+            <h1 className="text-2xl font-bold text-gray-800">Player AI Agent</h1>
             {!isConnected ? (
               <button
                 onClick={connectWallet}
@@ -426,7 +324,7 @@ const DeveloperChatbot = () => {
               >
                 <div
                   className={`max-w-[80%] p-3 rounded-lg ${
-                    msg.isBot ? 'bg-gray-700' : 'bg-blue-500 text-black'
+                    msg.isBot ? 'bg-gray-100' : 'bg-blue-500 text-white'
                   }`}
                 >
                   {msg.text}
@@ -441,7 +339,7 @@ const DeveloperChatbot = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type your message..."
-              className="flex-1 p-2 border border-gray-300 text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <button
               type="submit"
@@ -458,4 +356,4 @@ const DeveloperChatbot = () => {
   );
 };
 
-export default DeveloperChatbot;
+export default PlayerChatbot;
