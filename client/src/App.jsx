@@ -155,7 +155,7 @@ function App() {
       <div className="min-h-screen bg-gray-900 text-white">
         <ToastContainer />
         <Navbar />
-        <BalanceDisplay/>
+        <BalanceDisplay className="mt-14"/>
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<LandingPage />} />
