@@ -47,6 +47,7 @@ const Navbar = () => {
                 <Link to="/Pgames" className="text-gray-300 hover:text-purple-500">Games</Link>
                 <Link to="/tournaments" className="text-gray-300 hover:text-purple-500">Tournaments</Link>
                 <Link to="/community" className="text-gray-300 hover:text-purple-500">Community</Link>
+                <Link to="/playergovernance" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">Governance</Link>
               </>
             )}
                
@@ -57,6 +58,7 @@ const Navbar = () => {
                 <Link to="/Dgames" className="text-gray-300 hover:text-purple-500">Games</Link>
                 <Link to="/tournaments" className="text-gray-300 hover:text-purple-500">Tournaments</Link>
                 <Link to="/crowdfunding" className="text-gray-300 hover:text-purple-500">Crowdfunding</Link>
+                <Link to="/governance" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">Governance</Link>
               </>
             )}
                 
@@ -110,6 +112,7 @@ const Navbar = () => {
                     <Link to="/Pgame" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">Games</Link>
                     <Link to="/tournaments" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">Tournaments</Link>
                     <Link to="/community" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">Community</Link>
+                    <Link to="/playergovernance" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">Governance</Link>
                   </>
                 )}
                 {user.type === 'developer' && (
@@ -118,6 +121,7 @@ const Navbar = () => {
                     <Link to="/Dgames" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">Games</Link>
                     <Link to="/tournaments" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">Tournaments</Link>
                     <Link to="/crowdfunding" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">Crowdfunding</Link>
+                    <Link to="/governance" className="block text-gray-300 hover:text-purple-500 transition-colors py-2">Governance</Link>
                   </>
                 )}
                 <button

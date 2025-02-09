@@ -23,7 +23,11 @@ import DGames from './pages/developer/DGames';
 import Market from './pages/players/Market';
 import ProposalComponent from './pages/developer/governance';
 import BalanceDisplay from './Balance';
+<<<<<<< Updated upstream
 import Leaderboard from './components/Leaderboard';
+=======
+import PlayerGovernance from './pages/players/PlayerGovernance';
+>>>>>>> Stashed changes
 function PrivateRoute({ children, allowedUserType }) {
   const [userType, setUserType] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
@@ -244,6 +248,14 @@ function App() {
                 <ProposalComponent/>
               </PrivateRoute>
             }
+          />
+          <Route
+          path='/playergovernance'
+          element={
+            <PrivateRoute allowedUserType="player">
+                <PlayerGovernance/>
+              </PrivateRoute>
+          }
           />
 
         </Routes>
