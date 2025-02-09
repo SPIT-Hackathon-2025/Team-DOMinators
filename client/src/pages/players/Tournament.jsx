@@ -108,9 +108,9 @@ const TournamentDashboard = () => {
   }, []);
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="min-h-screen px-8 py-22">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold text-indigo-900 mb-8">Active Tournaments</h1>
+        <h1 className="text-4xl font-bold  text-purple-400 to-pink-400 bg-clip-text mb-8">Active Tournaments</h1>
         
         {error && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
@@ -125,21 +125,21 @@ const TournamentDashboard = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {tournaments.map((tournament) => (
-              <div key={tournament.id} className="rounded-xl shadow-lg overflow-hidden transform transition hover:scale-105">
-                <div className="p-6">
-                  <h2 className="text-2xl font-semibold text-gray-800 mb-2">{tournament.name}</h2>
+              <div key={tournament.id} className="rounded-xl shadow-lg overflow-hidden transform transition hover:scale-105 border-indigo-700 border-1">
+                <div className="p-6 bg-gradient-to-t from-slate-900 to-slate-700">
+                  <h2 className="text-2xl font-semibold text-gray-300 mb-2">{tournament.name}</h2>
                   <div className="space-y-2">
-                    <p className="text-gray-600">
+                    <p className="text-gray-200">
                       Prize Pool: {ethers.utils.formatEther(tournament.prizePool)} ETH
                     </p>
-                    <p className="text-gray-600">
+                    <p className="text-gray-200">
                       Players: {tournament.players.length}
                     </p>
                     <div className="mt-4">
                       <button
                         onClick={() => joinTournament(tournament.id)}
                         disabled={joinLoading[tournament.id]}
-                        className="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full py-2 px-4 bg-gradient-to-r from-purple-500 to-indigo-700  hover:bg-purple-700 text-white rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {joinLoading[tournament.id] ? (
                           <span className="flex items-center justify-center">
