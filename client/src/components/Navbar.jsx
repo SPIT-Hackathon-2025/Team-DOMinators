@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { auth } from '../components/firebase';
 import { signOut } from 'firebase/auth';
 import { toast } from 'react-toastify';
-
+import { Globe } from 'lucide-react'; 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState(null);
@@ -82,6 +82,7 @@ const Navbar = () => {
                 Logout
               </button>
             )}
+             <Globe className="w-5 h-5 text-white-300 hover:text-purple-500" />
           </div>
 
           {/* Mobile menu button remains the same */}
@@ -141,7 +142,9 @@ const Navbar = () => {
                 </Link>
               </>
             )}
+            
           </div>
+          <Globe className="w-5 h-5 text-white-300 hover:text-purple-500" />
         </div>
       )}
     </nav>
