@@ -317,14 +317,14 @@ const TournamentManager = () => {
             {closedTournaments.map((tournament) => (
               <div
                 key={tournament.id}
-                className="bg-gray p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+                className="bg-gradient-to-t from-slate-900 to-slate-700 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-indigo-700 mt-9"
               >
-                <h3 className="text-xl font-semibold mb-3">{tournament.name}</h3>
+                <h3 className="text-xl text-gray-100 font-semibold mb-3">{tournament.name}</h3>
                 <div className="space-y-2">
-                  <p className="text-gray-600">Prize Pool: {tournament.prizePool}</p>
-                  <p className="text-gray-600">End Date: {tournament.endDate}</p>
+                  <p className="text-gray-300">Prize Pool: {tournament.prizePool}</p>
+                  <p className="text-gray-300">End Date: {tournament.endDate}</p>
                   <div>
-                    <p className="font-medium text-gray-700">Winners:</p>
+                    <p className="font-medium text-gray-400">Winners:</p>
                     <ul className="list-disc list-inside text-gray-600">
                       {tournament.winners.map((winner, index) => (
                         <li key={index}>{winner}</li>
