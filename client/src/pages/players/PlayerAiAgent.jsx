@@ -1,359 +1,227 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import { Unplug, SendHorizontal, MessageCircle } from 'lucide-react';
-import abi from '../abi.json'; // Replace with the ABI of EspeonXNFT
+import TicTacToe from './TicTacToe';
+import ConnectFour from './ConnectFour';
+import abi from '../../../abi.json';
+import { doc, setDoc, getDoc, collection } from 'firebase/firestore';
+import { db } from '../../components/firebase'; // Assuming firebase.js is in the same directory
 
-const PlayerChatbot = () => {
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const [isConnected, setIsConnected] = useState(false);
-  const [walletAddress, setWalletAddress] = useState('');
-  const [showModal, setShowModal] = useState(false);
-  const [pendingAction, setPendingAction] = useState(null);
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const chatRef = useRef(null);
+const CONTRACT_ADDRESS = "0x1aEC03d66c2Caee890AdAE3aF87E397e26F5456b"; // Replace with your contract address
+const CONTRACT_ABI = abi;
 
-  const CA = "0xYourContractAddress"; // Replace with your EspeonXNFT contract address
-  const GEMINI_API_KEY = 'AIzaSyCFKswhga9q7KF-qZ4ZzwcTxZRtrg6sb7Y';
+const PGames = () => {
+  const [showTicTacToe, setShowTicTacToe] = useState(false);
+  const [showConnectFour, setShowConnectFour] = useState(false);
+  const [account, setAccount] = useState('');
+  const [ownedNFTs, setOwnedNFTs] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [selectedAsset, setSelectedAsset] = useState(null);
 
-  const CONTRACT_ABI = abi; // Replace with the ABI of EspeonXNFT
-
-  const provider = window.ethereum ? new ethers.providers.Web3Provider(window.ethereum) : null;
-  const signer = provider?.getSigner();
-  const contract = CA && signer ? new ethers.Contract(CA, CONTRACT_ABI, signer) : null;
-
+  // Initialize Ethers and Fetch Owned NFTs
   useEffect(() => {
-    if (chatRef.current) {
-      chatRef.current.scrollTop = chatRef.current.scrollHeight;
-    }
-  }, [messages]);
+    const initEthers = async () => {
+      if (window.ethereum) {
+        try {
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
+          const signer = provider.getSigner();
+          const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
-  const addMessage = (text, isBot = false) => {
-    setMessages(prev => [...prev, { text, isBot, timestamp: Date.now() }]);
-  };
+          const accounts = await provider.send("eth_requestAccounts", []);
+          setAccount(accounts[0]);
 
-  const connectWallet = async () => {
-    try {
-      if (!provider) {
-        addMessage("Please install MetaMask!", true);
-        return;
-      }
-      await window.ethereum.request({ method: 'eth_requestAccounts' });
-      const address = await signer.getAddress();
-      setWalletAddress(address);
-      setIsConnected(true);
-      addMessage("Wallet connected successfully! Hi, I am your Player AI Agent. How may I assist you today?", true);
-    } catch (error) {
-      addMessage("Failed to connect wallet: " + error.message, true);
-    }
-  };
-
-  const processWithGemini = async (userInput) => {
-    try {
-      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': GEMINI_API_KEY
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `You are an AI assistant for a blockchain-based EspeonX platform.
-                     Parse this user request and respond with a JSON object containing 'function' and 'parameters'.
-                     Available functions: joinTournament, tradeNFT, donate, getUserBalance, getTransactionHistory, getTokenDetails, getTournamentDetails.
-                     Give answer in the language of the user.
-                     
-                     User request: "${userInput}"
-                     
-                     If the request doesn't match any function, respond with:
-                     {
-                       "function": "chat",
-                       "response": "your helpful response about EspeonX platform"
-                     }
-                     
-                     For functions, respond with format:
-                     {
-                       "function": "joinTournament",
-                       "parameters": {
-                         "tournamentId": 1
-                       }
-                     }`
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.1,
-            topP: 1,
-            topK: 1,
-            maxOutputTokens: 1000,
-          },
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('API Error Details:', errorData);
-        throw new Error(`API error (${response.status}): ${errorData.error?.message || response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      if (!data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-        console.error('Unexpected API response structure:', data);
-        throw new Error('Invalid response structure from Gemini API');
-      }
-
-      const aiResponse = data.candidates[0].content.parts[0].text;
-
-      try {
-        const parsedResponse = JSON.parse(aiResponse.trim());
-        
-        if (parsedResponse.function === 'chat') {
-          addMessage(parsedResponse.response, true);
-          return null;
+          await fetchOwnedNFTs(contract, accounts[0]);
+        } catch (err) {
+          setError('Failed to connect to the blockchain. Please ensure MetaMask is installed and connected.');
+          console.error('Initialization error:', err);
         }
-        
-        return processAIResponse(parsedResponse, userInput);
-      } catch (parseError) {
-        console.error('Parse error:', parseError);
-        throw new Error(`Failed to parse AI response: ${parseError.message}`);
-      }
-    } catch (error) {
-      console.error('AI Processing error:', error);
-      addMessage(`Error: ${error.message}. Please try again.`, true);
-      return null;
-    }
-  };
-
-  const processAIResponse = (aiResponse, originalInput) => {
-    if (!aiResponse.function || !aiResponse.parameters) {
-      throw new Error('Invalid AI response format');
-    }
-
-    return {
-      function: aiResponse.function,
-      params: aiResponse.parameters
-    };
-  };
-
-  const executeTransaction = async (action) => {
-    try {
-      let tx;
-      let result;
-      switch (action.function) {
-        case 'joinTournament':
-          tx = await contract.joinTournament(action.params.tournamentId);
-          break;
-        case 'tradeNFT':
-          tx = await contract.tradeNFT(action.params.tokenId);
-          break;
-        case 'donate':
-          tx = await contract.donate(action.params.crowdfundingId, action.params.amount);
-          break;
-        case 'getUserBalance':
-          result = await contract.getUserBalance(walletAddress);
-          addMessage(`Your balance is: ${result} ESPX tokens`, true);
-          return;
-        case 'getTransactionHistory':
-          result = await contract.getTransactionHistory(action.params.tokenId);
-          addMessage(`Transaction History for Token ID ${action.params.tokenId}: ${JSON.stringify(result, null, 2)}`, true);
-          return;
-        case 'getTokenDetails':
-          result = await contract.getNFTIPFSHash(action.params.tokenId);
-          const details = await contract.nftDetails(action.params.tokenId);
-          addMessage(`Token Details for Token ID ${action.params.tokenId}:
-            - IPFS Hash: ${result}
-            - Price: ${details.price}
-            - For Sale: ${details.forSale ? 'Yes' : 'No'}`, true);
-          return;
-        case 'getTournamentDetails':
-          result = await contract.getTournamentDetails(action.params.tournamentId);
-          addMessage(`Tournament Details for Tournament ID ${action.params.tournamentId}: ${JSON.stringify(result, null, 2)}`, true);
-          return;
-        default:
-          throw new Error('Unknown function');
-      }
-      
-      if (tx) {
-        const receipt = await tx.wait();
-        addMessage(`Transaction successful! Hash: ${receipt.transactionHash}`, true);
-      }
-    } catch (error) {
-      addMessage("Transaction failed: " + error.message, true);
-    }
-    setShowModal(false);
-    setPendingAction(null);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-
-    addMessage(input, false);
-    setInput('');
-
-    if (!isConnected) {
-      addMessage("Please connect your wallet first!", true);
-      return;
-    }
-
-    const action = await processWithGemini(input);
-    if (action) {
-      if (action.function.startsWith('get')) {
-        // Directly execute read-only functions without confirmation
-        executeTransaction(action);
       } else {
-        setPendingAction(action);
-        setShowModal(true);
+        setError('Please install MetaMask to use this application.');
       }
+    };
+    initEthers();
+  }, []);
+
+  // Fetch NFTs Owned by the Wallet Address
+  const fetchOwnedNFTs = async (contract, walletAddress) => {
+    setIsLoading(true);
+    try {
+      // Fetch all NFTMinted events
+      const filter = contract.filters.NFTMinted();
+      const events = await contract.queryFilter(filter);
+
+      // Process each event to get NFT details
+      const nfts = await Promise.all(events.map(async (event) => {
+        const { owner, tokenId, tokenURI, ipfsHash, price, gameType } = event.args;
+
+        // Check the current owner of the NFT
+        const currentOwner = await contract.ownerOf(tokenId);
+
+        // If the current owner matches the wallet address, include the NFT
+        if (currentOwner.toLowerCase() === walletAddress.toLowerCase()) {
+          const details = await contract.nftDetails(tokenId);
+
+          return {
+            tokenId: tokenId.toString(),
+            owner: currentOwner,
+            tokenURI,
+            ipfsHash,
+            price: ethers.utils.formatEther(price),
+            gameType,
+            forSale: details.forSale,
+          };
+        } else {
+          return null; // Skip NFTs not owned by the wallet
+        }
+      }));
+
+      // Filter out null values (NFTs not owned by the wallet)
+      const owned = nfts.filter((nft) => nft !== null);
+      setOwnedNFTs(owned);
+    } catch (err) {
+      setError('Failed to fetch NFTs. Please try again.');
+      console.error('Error fetching NFTs:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const formatTransactionDetails = (action) => {
-    const details = [];
-    
-    switch (action.function) {
-      case 'joinTournament':
-        details.push(
-          ['Tournament ID', action.params.tournamentId]
-        );
-        break;
-      case 'tradeNFT':
-        details.push(
-          ['Token ID', action.params.tokenId]
-        );
-        break;
-      case 'donate':
-        details.push(
-          ['Crowdfunding ID', action.params.crowdfundingId],
-          ['Amount', action.params.amount]
-        );
-        break;
-      default:
-        details.push(['Details', 'Unknown transaction type']);
+  // Toggle Asset for Game
+  const toggleAssetForGame = async (nft, gameType) => {
+    try {
+      const userRef = doc(db, 'users', account);
+      const userDoc = await getDoc(userRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const assets = userData.assets || [];
+
+        const assetIndex = assets.findIndex(asset => asset.tokenId === nft.tokenId);
+
+        if (assetIndex !== -1) {
+          assets[assetIndex].gameType = gameType;
+        } else {
+          assets.push({
+            tokenId: nft.tokenId,
+            ipfsHash: nft.ipfsHash,
+            gameType: gameType,
+          });
+        }
+
+        await setDoc(userRef, { assets }, { merge: true });
+      } else {
+        await setDoc(userRef, {
+          assets: [{
+            tokenId: nft.tokenId,
+            ipfsHash: nft.ipfsHash,
+            gameType: gameType,
+          }]
+        });
+      }
+
+      setSelectedAsset(nft);
+    } catch (err) {
+      console.error('Error toggling asset for game:', err);
     }
-    
-    return details;
-  };
-
-  const renderModal = () => {
-    if (!showModal || !pendingAction) return null;
-
-    const details = formatTransactionDetails(pendingAction);
-    const functionName = pendingAction.function
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/^./, str => str.toUpperCase());
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-        <div className="bg-white p-6 rounded-lg max-w-md w-full">
-          <h2 className="text-xl font-bold mb-4">Confirm Transaction</h2>
-          <div className="mb-6">
-            <div className="bg-blue-50 p-3 rounded-lg mb-4">
-              <h3 className="text-lg font-semibold text-blue-700 mb-2">
-                {functionName}
-              </h3>
-              <div className="space-y-2">
-                {details.map(([label, value], index) => (
-                  <div key={index} className="grid grid-cols-2 gap-2">
-                    <span className="text-sm font-medium text-gray-600">{label}:</span>
-                    <span className="text-sm text-gray-800 break-words">
-                      {typeof value === 'string' && value.startsWith('0x') 
-                        ? `${value.slice(0, 6)}...${value.slice(-4)}`
-                        : value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <button
-              onClick={() => setShowModal(false)}
-              className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => executeTransaction(pendingAction)}
-              className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 rounded-lg transition-colors"
-            >
-              Confirm
-            </button>
-          </div>
-        </div>
-      </div>
-    );
   };
 
   return (
-    <div className="fixed bottom-4 right-4">
-      <button
-        onClick={() => setIsChatOpen(!isChatOpen)}
-        className="bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-lg transition-colors"
-      >
-        <MessageCircle size={24} />
-      </button>
+    <div className="min-h-screen bg-gray-900 text-white p-8">
+      <div className="max-w-7xl mx-auto mt-16">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-8">
+          Play Games
+        </h1>
 
-      {isChatOpen && (
-        <div className="absolute bottom-16 right-0 w-96 h-[500px] bg-white rounded-lg shadow-lg flex flex-col">
-          <div className="mb-4 flex justify-between items-center p-4 border-b">
-            <h1 className="text-2xl font-bold text-gray-800">Player AI Agent</h1>
-            {!isConnected ? (
-              <button
-                onClick={connectWallet}
-                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                <Unplug />
-              </button>
-            ) : (
-              <span className="text-sm text-gray-600 bg-gray-200 px-4 py-2 rounded-lg">
-                {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
-              </span>
-            )}
-          </div>
-
-          <div 
-            ref={chatRef}
-            className="flex-1 overflow-y-auto mb-4 p-4 space-y-4"
-          >
-            {messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`flex ${msg.isBot ? 'justify-start' : 'justify-end'}`}
-              >
-                <div
-                  className={`max-w-[80%] p-3 rounded-lg ${
-                    msg.isBot ? 'bg-gray-100' : 'bg-blue-500 text-white'
-                  }`}
-                >
-                  {msg.text}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <form onSubmit={handleSubmit} className="flex gap-2 p-4 border-t">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              type="submit"
-              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"
+        {!showTicTacToe && !showConnectFour ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Tic-Tac-Toe Card */}
+            <div
+              className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+              onClick={() => setShowTicTacToe(true)}
             >
-              <SendHorizontal />
-            </button>
-          </form>
+              <h3 className="text-xl font-bold text-white mb-2">Tic-Tac-Toe</h3>
+              <p className="text-gray-300 mb-4 line-clamp-2">
+                A classic game of Tic-Tac-Toe. Play against a friend or test your skills!
+              </p>
+              <div className="flex items-center gap-3 text-gray-300">
+                <span className="font-medium">2 Players</span>
+              </div>
+            </div>
 
-          {renderModal()}
+            {/* Connect Four Card */}
+            <div
+              className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+              onClick={() => setShowConnectFour(true)}
+            >
+              <h3 className="text-xl font-bold text-white mb-2">Connect Four</h3>
+              <p className="text-gray-300 mb-4 line-clamp-2">
+                A two-player connection game. Drop discs and connect four to win!
+              </p>
+              <div className="flex items-center gap-3 text-gray-300">
+                <span className="font-medium">2 Players</span>
+              </div>
+            </div>
+          </div>
+        ) : showTicTacToe ? (
+          <TicTacToe selectedAsset={selectedAsset} />
+        ) : (
+          <ConnectFour selectedAsset={selectedAsset} />
+        )}
+
+        {/* My Owned Assets Section */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-6">
+            My Owned Assets
+          </h2>
+
+          {error && (
+            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded">
+              <p className="font-medium">Error:</p>
+              <p>{error}</p>
+            </div>
+          )}
+
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+              <p className="mt-4 text-gray-400">Loading assets...</p>
+            </div>
+          ) : ownedNFTs.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {ownedNFTs.map((nft) => (
+                <div
+                  key={nft.tokenId}
+                  className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all"
+                >
+                  <h3 className="text-xl font-bold text-white mb-2">Token ID: {nft.tokenId}</h3>
+                  <p className="text-sm text-gray-300 truncate mb-1">Owner: {nft.owner}</p>
+                  <p className="text-sm text-gray-300 mb-1">Price: {nft.price} ESPX</p>
+                  <p className="text-sm text-gray-300 mb-1">Game Type: {nft.gameType}</p>
+                  <p className="text-sm text-gray-300 truncate mb-3">IPFS Hash: {nft.ipfsHash}</p>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => toggleAssetForGame(nft, 'TicTacToe')}
+                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white"
+                    >
+                      Use for Tic-Tac-Toe
+                    </button>
+                    <button
+                      onClick={() => toggleAssetForGame(nft, 'ConnectFour')}
+                      className="px-4 py-2 bg-pink-600 hover:bg-pink-700 rounded-lg text-white"
+                    >
+                      Use for Connect Four
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-400 text-center">No assets owned by this wallet address.</p>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };
 
-export default PlayerChatbot;
+export default PGames;

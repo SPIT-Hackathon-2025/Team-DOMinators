@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { getAssetDetails } from '../../components/firebase';
 
-const TicTacToe = ({ account, preferences }) => {
+const TicTacToe = ({ selectedAsset }) => {
   const [board, setBoard] = useState(Array(9).fill(null));
   const [isXNext, setIsXNext] = useState(true);
-  const [showAssetList, setShowAssetList] = useState(false);
-  const [selectedAsset, setSelectedAsset] = useState(null);
-  const [backgroundColor, setBackgroundColor] = useState('bg-gray-800');
+  const [backgroundImage, setBackgroundImage] = useState('');
+
+  useEffect(() => {
+    if (selectedAsset) {
+      setBackgroundImage(`https://ipfs.io/ipfs/${selectedAsset.ipfsHash}`);
+    }
+  }, [selectedAsset]);
 
   const calculateWinner = (squares) => {
     const lines = [
@@ -50,41 +53,11 @@ const TicTacToe = ({ account, preferences }) => {
     setIsXNext(true);
   };
 
-  const handleUseAsset = async (assetId) => {
-    const assetDetails = await getAssetDetails(assetId);
-    if (assetDetails && assetDetails.color) {
-      setBackgroundColor(assetDetails.color);
-    }
-    setSelectedAsset(assetId);
-    setShowAssetList(false);
-  };
-
   return (
-    <div className={`${backgroundColor} rounded-xl p-8 shadow-2xl w-full max-w-md mx-auto`}>
+    <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-8 shadow-2xl w-full max-w-md mx-auto" style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
       <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
         Tic-Tac-Toe
       </h2>
-      <button
-        onClick={() => setShowAssetList(!showAssetList)}
-        className="w-full mb-4 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg transition-all flex items-center justify-center gap-2 font-medium shadow-lg"
-      >
-        Use Asset
-      </button>
-      {showAssetList && (
-        <div className="mb-4">
-          {Object.keys(preferences).map((assetId) => (
-            preferences[assetId].TicTacToe && (
-              <div
-                key={assetId}
-                onClick={() => handleUseAsset(assetId)}
-                className="p-2 mb-2 bg-gray-700 rounded-lg cursor-pointer"
-              >
-                Asset ID: {assetId}
-              </div>
-            )
-          ))}
-        </div>
-      )}
       <div className="grid grid-cols-3 gap-2">
         {board.map((square, index) => (
           <button
