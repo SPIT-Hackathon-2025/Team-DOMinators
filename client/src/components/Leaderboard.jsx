@@ -3,11 +3,11 @@ import { motion } from 'framer-motion';
 import { Trophy, ChevronUp } from 'lucide-react';
 
 const mockLeaderboard = [
-  { id: 1, name: 'CryptoWarrior', score: 1500 },
+  { id: 1, name: 'DOMinators', score: 1500 },
   { id: 2, name: 'MetaChampion', score: 1450 },
-  { id: 3, name: 'NFTMaster', score: 1400 },
+  { id: 3, name: 'NightRidersr', score: 1400 },
   { id: 4, name: 'ChainKnight', score: 1350 },
-  { id: 5, name: 'DeFiTitan', score: 1300 },
+  { id: 5, name: 'DimpleNoDamzel', score: 1300 },
 ];
 
 const Leaderboard = () => {
