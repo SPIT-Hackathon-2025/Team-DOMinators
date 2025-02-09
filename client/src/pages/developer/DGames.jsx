@@ -4,6 +4,7 @@ import abi from '../../../abi.json';
 import details from '../../assets/details.jpg';
 import upload from '../../assets/upload.png';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 
 const CONTRACT_ADDRESS = "0x1aEC03d66c2Caee890AdAE3aF87E397e26F5456b";
 const CONTRACT_ABI = abi;
@@ -36,6 +37,11 @@ const DGames = () => {
   const [selectedType, setSelectedType] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
   const [gameTypes, setGameTypes] = useState([]);
+
+  // Image Upload States
+  const [nftImage, setNftImage] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadError, setUploadError] = useState('');
 
   useEffect(() => {
     const initEthers = async () => {
@@ -136,11 +142,44 @@ const DGames = () => {
     }
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setNftImage(file);
+    setUploadError('');
+    setUploadingImage(true);
+
+    try {
+      const fileData = new FormData();
+      fileData.append("file", file);
+
+      const response = await axios({
+        method: "post",
+        url: "https://api.pinata.cloud/pinning/pinFileToIPFS",
+        data: fileData,
+        headers: {
+          pinata_api_key: import.meta.env.VITE_PINATA_API_KEY,
+          pinata_secret_api_key: import.meta.env.VITE_PINATA_SECRETKEY,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const ipfsHash = response.data.IpfsHash;
+      setIpfsHash(ipfsHash);
+    } catch (error) {
+      console.error('IPFS upload error:', error);
+      setUploadError('Failed to upload image. Please try again.');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const mintNFT = async (e) => {
     e.preventDefault();
     try {
       const tx = await contract.mintNFT(
-        tokenURI,
+        `https://gateway.pinata.cloud/ipfs/${ipfsHash}`, // Use the IPFS URL as the tokenURI
         ipfsHash,
         ethers.utils.parseEther(nftPrice),
         nftGameId
@@ -173,6 +212,7 @@ const DGames = () => {
     setIpfsHash('');
     setNftPrice('');
     setNftGameId('');
+    setNftImage(null);
   };
 
   const NFTCard = ({ nft }) => (
@@ -356,19 +396,42 @@ const DGames = () => {
               <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg p-6 mt-8">
                 <h3 className="text-xl font-semibold mb-6 text-white">Mint NFT</h3>
                 <form onSubmit={mintNFT} className="space-y-4">
-                  <input
-                    type="text"
-                    placeholder="Token URI"
-                    value={tokenURI}
-                    onChange={(e) => setTokenURI(e.target.value)}
-                    className="w-full bg-gray-600/50 rounded-lg px-4 py-3 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  />
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-300">NFT Image</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="w-full bg-gray-600/50 rounded-lg px-4 py-3 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                      disabled={uploadingImage}
+                    />
+                    {uploadingImage && (
+                      <div className="text-sm text-purple-400 mt-2">
+                        Uploading image to IPFS...
+                      </div>
+                    )}
+                    {uploadError && (
+                      <div className="text-sm text-red-400 mt-2">
+                        {uploadError}
+                      </div>
+                    )}
+                    {nftImage && (
+                      <div className="mt-4">
+                        <img
+                          src={URL.createObjectURL(nftImage)}
+                          alt="NFT preview"
+                          className="w-full h-32 object-cover rounded-lg"
+                        />
+                      </div>
+                    )}
+                  </div>
                   <input
                     type="text"
                     placeholder="IPFS Hash"
                     value={ipfsHash}
                     onChange={(e) => setIpfsHash(e.target.value)}
                     className="w-full bg-gray-600/50 rounded-lg px-4 py-3 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    readOnly
                   />
                   <input
                     type="number"
