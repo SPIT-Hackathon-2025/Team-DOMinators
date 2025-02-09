@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import TicTacToe from './TicTacToe';
 import ConnectFour from './ConnectFour';
 import abi from '../../../abi.json';
+import { saveUserPreference, getUserPreferences } from '../../components/firebase';
 
 const CONTRACT_ADDRESS = "0x1aEC03d66c2Caee890AdAE3aF87E397e26F5456b"; // Replace with your contract address
 const CONTRACT_ABI = abi;
@@ -14,8 +15,8 @@ const PGames = () => {
   const [ownedNFTs, setOwnedNFTs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [preferences, setPreferences] = useState({});
 
-  // Initialize Ethers and Fetch Owned NFTs
   useEffect(() => {
     const initEthers = async () => {
       if (window.ethereum) {
@@ -28,6 +29,8 @@ const PGames = () => {
           setAccount(accounts[0]);
 
           await fetchOwnedNFTs(contract, accounts[0]);
+          const userPreferences = await getUserPreferences(accounts[0]);
+          setPreferences(userPreferences);
         } catch (err) {
           setError('Failed to connect to the blockchain. Please ensure MetaMask is installed and connected.');
           console.error('Initialization error:', err);
@@ -39,25 +42,18 @@ const PGames = () => {
     initEthers();
   }, []);
 
-  // Fetch NFTs Owned by the Wallet Address
   const fetchOwnedNFTs = async (contract, walletAddress) => {
     setIsLoading(true);
     try {
-      // Fetch all NFTMinted events
       const filter = contract.filters.NFTMinted();
       const events = await contract.queryFilter(filter);
 
-      // Process each event to get NFT details
       const nfts = await Promise.all(events.map(async (event) => {
         const { owner, tokenId, tokenURI, ipfsHash, price, gameType } = event.args;
-
-        // Check the current owner of the NFT
         const currentOwner = await contract.ownerOf(tokenId);
 
-        // If the current owner matches the wallet address, include the NFT
         if (currentOwner.toLowerCase() === walletAddress.toLowerCase()) {
           const details = await contract.nftDetails(tokenId);
-
           return {
             tokenId: tokenId.toString(),
             owner: currentOwner,
@@ -68,11 +64,10 @@ const PGames = () => {
             forSale: details.forSale,
           };
         } else {
-          return null; // Skip NFTs not owned by the wallet
+          return null;
         }
       }));
 
-      // Filter out null values (NFTs not owned by the wallet)
       const owned = nfts.filter((nft) => nft !== null);
       setOwnedNFTs(owned);
     } catch (err) {
@@ -81,6 +76,12 @@ const PGames = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const toggleAssetForGame = async (assetId, gameType, enabled) => {
+    await saveUserPreference(account, assetId, gameType, enabled);
+    const userPreferences = await getUserPreferences(account);
+    setPreferences(userPreferences);
   };
 
   return (
@@ -92,7 +93,6 @@ const PGames = () => {
 
         {!showTicTacToe && !showConnectFour ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Tic-Tac-Toe Card */}
             <div
               className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer"
               onClick={() => setShowTicTacToe(true)}
@@ -106,7 +106,6 @@ const PGames = () => {
               </div>
             </div>
 
-            {/* Connect Four Card */}
             <div
               className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer"
               onClick={() => setShowConnectFour(true)}
@@ -121,12 +120,11 @@ const PGames = () => {
             </div>
           </div>
         ) : showTicTacToe ? (
-          <TicTacToe />
+          <TicTacToe account={account} preferences={preferences} />
         ) : (
-          <ConnectFour />
+          <ConnectFour account={account} preferences={preferences} />
         )}
 
-        {/* My Owned Assets Section */}
         <div className="mt-12">
           <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-6">
             My Owned Assets
@@ -156,6 +154,24 @@ const PGames = () => {
                   <p className="text-sm text-gray-300 mb-1">Price: {nft.price} ESPX</p>
                   <p className="text-sm text-gray-300 mb-1">Game Type: {nft.gameType}</p>
                   <p className="text-sm text-gray-300 truncate mb-3">IPFS Hash: {nft.ipfsHash}</p>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={preferences[nft.tokenId]?.TicTacToe || false}
+                        onChange={(e) => toggleAssetForGame(nft.tokenId, 'TicTacToe', e.target.checked)}
+                      />
+                      Tic-Tac-Toe
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={preferences[nft.tokenId]?.ConnectFour || false}
+                        onChange={(e) => toggleAssetForGame(nft.tokenId, 'ConnectFour', e.target.checked)}
+                      />
+                      Connect Four
+                    </label>
+                  </div>
                 </div>
               ))}
             </div>
