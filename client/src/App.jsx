@@ -25,7 +25,6 @@ import ProposalComponent from './pages/developer/governance';
 import BalanceDisplay from './Balance';
 
 import Leaderboard from './components/Leaderboard';
-
 import PlayerGovernance from './pages/players/PlayerGovernance';
 function PrivateRoute({ children, allowedUserType }) {
   const [userType, setUserType] = React.useState(null);
