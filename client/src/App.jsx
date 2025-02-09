@@ -25,7 +25,11 @@ import ProposalComponent from './pages/developer/governance';
 import BalanceDisplay from './Balance';
 
 import Leaderboard from './components/Leaderboard';
+
+import GTranslate from './components/GTranslate';
+
 import PlayerGovernance from './pages/players/PlayerGovernance';
+
 function PrivateRoute({ children, allowedUserType }) {
   const [userType, setUserType] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
@@ -155,6 +159,7 @@ function App() {
 
   return (
     <Router>
+      <GTranslate/>
       <div className="min-h-screen bg-gray-900 text-white">
         <ToastContainer />
         <Navbar />

@@ -82,6 +82,7 @@ const Navbar = () => {
                 Logout
               </button>
             )}
+             <Globe className="w-5 h-5 text-white-300 hover:text-purple-500" />
           </div>
 
           {/* Mobile menu button remains the same */}
@@ -141,7 +142,9 @@ const Navbar = () => {
                 </Link>
               </>
             )}
+            
           </div>
+          <Globe className="w-5 h-5 text-white-300 hover:text-purple-500" />
         </div>
       )}
     </nav>
