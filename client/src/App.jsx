@@ -21,7 +21,8 @@ import { auth, db } from './components/firebase';
 import CommunityPage from './pages/players/CommunityPage';
 import DGames from './pages/developer/DGames';
 import Market from './pages/players/Market';
-
+import ProposalComponent from './pages/developer/governance';
+import BalanceDisplay from './Balance';
 function PrivateRoute({ children, allowedUserType }) {
   const [userType, setUserType] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
@@ -154,6 +155,7 @@ function App() {
       <div className="min-h-screen bg-gray-900 text-white">
         <ToastContainer />
         <Navbar />
+        <BalanceDisplay/>
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<LandingPage />} />
@@ -223,6 +225,14 @@ function App() {
             element={
               <PrivateRoute allowedUserType="developer">
                 <DGames/>
+              </PrivateRoute>
+            }
+          />
+           <Route
+            path="/governance"
+            element={
+              <PrivateRoute allowedUserType="developer">
+                <ProposalComponent/>
               </PrivateRoute>
             }
           />

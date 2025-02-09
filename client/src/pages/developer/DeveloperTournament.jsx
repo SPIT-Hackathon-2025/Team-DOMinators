@@ -1,380 +1,158 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, DollarSign, Users, AlertCircle, Plus, Award, Check, X } from 'lucide-react';
-import { db, auth } from '../../components/firebase';
-import { collection, addDoc, query, where, onSnapshot } from 'firebase/firestore';
+import React, { useState, useEffect } from "react";
+import { ethers } from "ethers";
+import ABI from "../../../abi.json";
 
-const CreateTournamentModal = ({ isOpen, onClose, onSubmit }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    prizePool: '',
-    startDate: '',
-    endDate: '',
-    startTime: '',
-    endTime: '',
-    numberOfUsers: 3,
-    splitRatios: Array(3).fill('')
-  });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit({
-      ...formData,
-      splitRatios: formData.splitRatios.map(ratio => parseInt(ratio))
-    });
-    onClose();
-    setFormData({ 
-      name: '', 
-      description: '', 
-      prizePool: '', 
-      startDate: '', 
-      endDate: '', 
-      startTime: '', 
-      endTime: '', 
-      numberOfUsers: 3, 
-      splitRatios: Array(3).fill('') 
-    });
-  };
-
-  const handleSplitChange = (index, value) => {
-    const newSplitRatios = [...formData.splitRatios];
-    newSplitRatios[index] = value;
-    setFormData({ ...formData, splitRatios: newSplitRatios });
-  };
-
-  const handleNumberOfUsersChange = (e) => {
-    const numberOfUsers = parseInt(e.target.value);
-    setFormData({
-      ...formData,
-      numberOfUsers,
-      splitRatios: Array(numberOfUsers).fill('')
-    });
-  };
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-8 shadow-2xl w-full max-w-2xl relative"
-          >
-            <button
-              onClick={onClose}
-              className="absolute right-4 top-4 text-gray-400 hover:text-white transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-            
-            <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-              Create Tournament
-            </h2>
-            
-            <form onSubmit={handleSubmit} className="space-y-6 max-h-[80vh] overflow-y-auto">
-              <div>
-                <label className="block text-sm font-medium mb-2 text-gray-300">Tournament Name</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full bg-gray-700/50 rounded-lg px-4 py-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  required
-                  placeholder="Enter tournament name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2 text-gray-300">Tournament Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full bg-gray-700/50 rounded-lg px-4 py-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  required
-                  placeholder="Enter tournament description"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2 text-gray-300">Prize Pool (ETH)</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.prizePool}
-                    onChange={(e) => setFormData({ ...formData, prizePool: e.target.value })}
-                    className="w-full bg-gray-700/50 rounded-lg px-4 py-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                    required
-                    placeholder="0.00"
-                  />
-                  <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">ETH</span>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2 text-gray-300">Start Date</label>
-                <input
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                  className="w-full bg-gray-700/50 rounded-lg px-4 py-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2 text-gray-300">End Date</label>
-                <input
-                  type="date"
-                  value={formData.endDate}
-                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                  className="w-full bg-gray-700/50 rounded-lg px-4 py-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2 text-gray-300">Start Time</label>
-                <input
-                  type="time"
-                  value={formData.startTime}
-                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                  className="w-full bg-gray-700/50 rounded-lg px-4 py-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2 text-gray-300">End Time</label>
-                <input
-                  type="time"
-                  value={formData.endTime}
-                  onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                  className="w-full bg-gray-700/50 rounded-lg px-4 py-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2 text-gray-300">Number of Users to Split Prize</label>
-                <select
-                  value={formData.numberOfUsers}
-                  onChange={handleNumberOfUsersChange}
-                  className="w-full bg-gray-700/50 rounded-lg px-4 py-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  required
-                >
-                  {[2, 3, 4, 5, 6].map((num) => (
-                    <option key={num} value={num}>
-                      {num} Users
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2 text-gray-300">Prize Split Ratios (%)</label>
-                <div className="grid grid-cols-3 gap-4">
-                  {formData.splitRatios.map((ratio, index) => (
-                    <div key={index} className="relative">
-                      <input
-                        type="number"
-                        value={ratio}
-                        onChange={(e) => handleSplitChange(index, e.target.value)}
-                        className="w-full bg-gray-700/50 rounded-lg px-4 py-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                        placeholder={`${index + 1}st place`}
-                        required
-                      />
-                      <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">%</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg px-6 py-3 font-medium text-white shadow-lg flex items-center justify-center gap-2 transition-all"
-                type="submit"
-              >
-                <Plus className="w-5 h-5" />
-                Create Tournament
-              </motion.button>
-            </form>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
-  );
-};
-
-const TournamentCard = ({ tournament, onDistributePrizes }) => {
-  const { id, name, prizePool, splitRatios, status, winners = [] } = tournament;
-
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all"
-    >
-      <div className="flex justify-between items-start mb-6">
-        <h3 className="text-xl font-bold text-white">{name}</h3>
-        <motion.span 
-          className={`px-4 py-1 rounded-full text-sm font-medium ${
-            status === 'active' 
-              ? 'bg-gradient-to-r from-green-500 to-emerald-500' 
-              : status === 'upcoming'
-              ? 'bg-gradient-to-r from-yellow-500 to-amber-500'
-              : 'bg-gradient-to-r from-gray-600 to-gray-700'
-          }`}
-        >
-          {status}
-        </motion.span>
-      </div>
-      <div className="space-y-4">
-        <div className="flex items-center gap-3 text-gray-300">
-          <DollarSign className="w-5 h-5 text-purple-400" />
-          <span className="font-medium">{prizePool} ETH</span>
-        </div>
-        <div className="flex items-center gap-3 text-gray-300">
-          <Trophy className="w-5 h-5 text-purple-400" />
-          <div className="flex gap-2">
-            {splitRatios.map((ratio, index) => (
-              <span key={index} className="px-3 py-1 bg-gray-700/50 rounded-lg font-medium">
-                {ratio}%
-              </span>
-            ))}
-          </div>
-        </div>
-        {winners.length > 0 && (
-          <div className="flex items-center gap-3 text-gray-300">
-            <Award className="w-5 h-5 text-purple-400" />
-            <span className="font-medium">Winners Announced</span>
-          </div>
-        )}
-      </div>
-      {status === 'active' && (
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => onDistributePrizes(id, [])}
-          className="w-full mt-6 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 rounded-lg transition-all flex items-center justify-center gap-2 font-medium shadow-lg"
-        >
-          <Award className="w-5 h-5" />
-          Distribute Prizes
-        </motion.button>
-      )}
-    </motion.div>
-  );
-};
-
-const DeveloperTournament = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTab, setSelectedTab] = useState('active');
+const TournamentManager = () => {
+  const [tournamentName, setTournamentName] = useState("");
+  const [prizePool, setPrizePool] = useState("");
+  const [splitRatios, setSplitRatios] = useState("");
+  const [tournamentId, setTournamentId] = useState("");
+  const [winners, setWinners] = useState("");
+  const [totalPrize, setTotalPrize] = useState("");
   const [tournaments, setTournaments] = useState([]);
 
-  useEffect(() => {
-    const user = auth.currentUser;
-    if (user) {
-      const q = query(collection(db, 'Tournaments'), where('developerId', '==', user.uid));
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const tournamentsData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setTournaments(tournamentsData);
-      });
-      return () => unsubscribe();
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  const signer = provider.getSigner();
+  const contractAddress = "0x1aEC03d66c2Caee890AdAE3aF87E397e26F5456b";
+  const contract = new ethers.Contract(contractAddress, ABI, signer);
+
+  // Fetch all tournaments
+  const fetchTournaments = async () => {
+    try {
+      const tournamentList = [];
+      let i = 1;
+
+      // Loop until we find an empty tournament (assuming tournaments are sequentially numbered)
+      while (true) {
+        try {
+          const tournament = await contract.getTournamentDetails(i);
+          tournamentList.push({ id: i, ...tournament });
+          i++;
+        } catch (error) {
+          // Exit the loop if the tournament does not exist
+          break;
+        }
+      }
+
+      setTournaments(tournamentList);
+    } catch (error) {
+      console.error("Error fetching tournaments:", error);
     }
+  };
+
+  useEffect(() => {
+    fetchTournaments();
   }, []);
 
-  const handleCreateTournament = async (tournamentData) => {
-    const user = auth.currentUser;
-    if (user) {
-      const tournamentWithDeveloper = {
-        ...tournamentData,
-        developerId: user.uid,
-        status: "active"
-      };
-      await addDoc(collection(db, 'Tournaments'), tournamentWithDeveloper);
+  const createTournament = async () => {
+    try {
+      const ratios = splitRatios.split(",").map((ratio) => parseInt(ratio.trim(), 10));
+      const tx = await contract.createTournament(tournamentName, ethers.utils.parseEther(prizePool), ratios);
+      await tx.wait();
+      alert("Tournament created successfully!");
+      fetchTournaments(); // Refresh the tournament list
+    } catch (error) {
+      console.error("Error creating tournament:", error);
+      alert("Failed to create tournament. Check the console for details.");
     }
   };
 
-  const handleDistributePrizes = (tournamentId, winners) => {
-    setTournaments(tournaments.map(tournament => 
-      tournament.id === tournamentId
-        ? { ...tournament, status: 'closed', winners }
-        : tournament
-    ));
+  const distributePrize = async () => {
+    try {
+      const winnerAddresses = winners.split(",").map((address) => address.trim());
+      const tx = await contract.distributePrize(tournamentId, winnerAddresses, ethers.utils.parseEther(totalPrize));
+      await tx.wait();
+      alert("Prize distributed successfully!");
+      fetchTournaments(); // Refresh the tournament list
+    } catch (error) {
+      console.error("Error distributing prize:", error);
+      alert("Failed to distribute prize. Check the console for details.");
+    }
   };
 
-  const filteredTournaments = tournaments.filter(tournament => {
-    const now = new Date();
-    const startDate = new Date(`${tournament.startDate}T${tournament.startTime}`);
-    const endDate = new Date(`${tournament.endDate}T${tournament.endTime}`);
-
-    if (selectedTab === 'active') return now >= startDate && now <= endDate;
-    if (selectedTab === 'upcoming') return now < startDate;
-    if (selectedTab === 'closed') return now > endDate;
-    return true;
-  });
-
   return (
-    <div className="min-h-screen bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mt-11 mx-auto">
-        <div className="flex justify-between items-center mb-12">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-            Tournament Management
-          </h1>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setIsModalOpen(true)}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg px-6 py-3 font-medium text-white shadow-lg flex items-center gap-2"
-          >
-            <Plus className="w-5 h-5" />
-            Create Tournament
-          </motion.button>
-        </div>
+    <div className="p-6 rounded-lg shadow-md">
+      <h1 className="text-2xl font-bold mb-4">Tournament Manager</h1>
 
-        <div className="flex gap-4 mb-8">
-          <button
-            onClick={() => setSelectedTab('active')}
-            className={`px-6 py-2 rounded-lg font-medium ${
-              selectedTab === 'active'
-                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
-                : 'bg-gray-700/50 text-gray-300'
-            }`}
-          >
-            Active Tournaments
-          </button>
-          <button
-            onClick={() => setSelectedTab('upcoming')}
-            className={`px-6 py-2 rounded-lg font-medium ${
-              selectedTab === 'upcoming'
-                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
-                : 'bg-gray-700/50 text-gray-300'
-            }`}
-          >
-            Upcoming Tournaments
-          </button>
-          <button
-            onClick={() => setSelectedTab('closed')}
-            className={`px-6 py-2 rounded-lg font-medium ${
-              selectedTab === 'closed'
-                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
-                : 'bg-gray-700/50 text-gray-300'
-            }`}
-          >
-            Closed Tournaments
-          </button>
-        </div>
-
-        <CreateTournamentModal 
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onSubmit={handleCreateTournament}
+      {/* Create Tournament Section */}
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">Create Tournament</h2>
+        <input
+          type="text"
+          placeholder="Tournament Name"
+          value={tournamentName}
+          onChange={(e) => setTournamentName(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded mb-2"
         />
+        <input
+          type="text"
+          placeholder="Prize Pool (in ESPX)"
+          value={prizePool}
+          onChange={(e) => setPrizePool(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded mb-2"
+        />
+        <input
+          type="text"
+          placeholder="Split Ratios (comma-separated, e.g., 50,30,20)"
+          value={splitRatios}
+          onChange={(e) => setSplitRatios(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded mb-2"
+        />
+        <button
+          onClick={createTournament}
+          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+        >
+          Create Tournament
+        </button>
+      </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredTournaments.map(tournament => (
-            <TournamentCard
-              key={tournament.id}
-              tournament={tournament}
-              onDistributePrizes={handleDistributePrizes}
-            />
+      {/* Distribute Prize Section */}
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">Distribute Prize</h2>
+        <input
+          type="text"
+          placeholder="Tournament ID"
+          value={tournamentId}
+          onChange={(e) => setTournamentId(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded mb-2"
+        />
+        <input
+          type="text"
+          placeholder="Winners (comma-separated addresses)"
+          value={winners}
+          onChange={(e) => setWinners(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded mb-2"
+        />
+        <input
+          type="text"
+          placeholder="Total Prize (in ESPX)"
+          value={totalPrize}
+          onChange={(e) => setTotalPrize(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded mb-2"
+        />
+        <button
+          onClick={distributePrize}
+          className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600"
+        >
+          Distribute Prize
+        </button>
+      </div>
+
+     
+      {/* Tournament List Section */}
+      <div>
+        <h2 className="text-xl font-semibold mb-2">Tournaments</h2>
+        <div className="space-y-4">
+          {tournaments.map((tournament) => (
+            <div key={tournament.id} className="p-4 border border-gray-300 rounded">
+              <h3 className="text-lg font-bold">Tournament ID: {tournament.id}</h3>
+              <p>Name: {tournament.name}</p>
+              <p>Prize Pool: {ethers.utils.formatEther(tournament.prizePool)} ESPX</p>
+              <p>Status: {tournament.status === 0 ? "Active" : "Closed"}</p>
+              <p>Winner: {tournament.winner || "Not yet determined"}</p>
+              <p>Players: {tournament.players.length}</p>
+              <p>Split Ratios: {tournament.splitRatios.join(", ")}</p>
+            </div>
           ))}
         </div>
       </div>
@@ -382,4 +160,4 @@ const DeveloperTournament = () => {
   );
 };
 
-export default DeveloperTournament;
+export default TournamentManager;
