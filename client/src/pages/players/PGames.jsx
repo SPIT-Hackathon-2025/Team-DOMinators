@@ -4,6 +4,7 @@ import TicTacToe from './TicTacToe';
 import ConnectFour from './ConnectFour';
 import abi from '../../../abi.json';
 import { doc, setDoc, getDoc, collection } from 'firebase/firestore';
+import PlayerChatbot from './PlayerAiAgent';
 import { db } from '../../components/firebase'; // Assuming firebase.js is in the same directory
 
 const CONTRACT_ADDRESS = "0x1aEC03d66c2Caee890AdAE3aF87E397e26F5456b"; // Replace with your contract address
@@ -219,6 +220,7 @@ const PGames = () => {
             <p className="text-gray-400 text-center">No assets owned by this wallet address.</p>
           )}
         </div>
+        <PlayerChatbot/>
       </div>
     </div>
   );

@@ -5,17 +5,29 @@ from xgboost import XGBClassifier
 from imblearn.over_sampling import SMOTE
 from collections import defaultdict, deque
 import os
+from flask_cors import CORS
 
-# Initialize Flask app
+from flask import Flask, request, jsonify
+from flask_cors import CORS  # You'll need to install this: pip install flask-cors
+
 app = Flask(__name__)
+CORS(app, resources={
+    r"/predict": {
+        "origins": ["http://localhost:5173"],  # Add your frontend origin
+        "methods": ["POST"],
+        "allow_headers": ["Content-Type"],
+        "supports_credentials": True
+    }
+})
 
 # Load dataset path
-dataset_path = 'C:/Users/Anand Shah/SPIT_HACK/Team-DOMinators/dataset.csv'
+dataset_path = r"C:\Users\param\OneDrive\Desktop\Hackathon\Team-DOMinators\backend\dataset.csv"
+
 
 # Convert timestamp to minutes
 def time_to_minutes(time_str):
     hours, minutes, seconds = map(int, time_str.split(':'))
-    return hours * 60 + minutes + seconds / 60
+    return hours * 3600 + minutes*60 + seconds 
 
 # Feature Engineering Function
 def engineer_features(df, for_training=False):
